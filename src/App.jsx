@@ -9,14 +9,12 @@ function App() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto p-4">
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/board/:id" element={<Board />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-        </Routes>
-      </main>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/board/:id" element={<Board />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Routes>
     </div>
   );
 }
