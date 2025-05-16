@@ -1,21 +1,37 @@
-import { Routes, Route } from "react-router-dom";
-import Board from "./pages/Board";
-import Dashboard from "./pages/Dashboard";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Header from "./components/Header";
+import { BrowserRouter as Router } from "react-router-dom";
+import { ErrorProvider } from "./contexts/ErrorContext";
+import { LoadingProvider } from "./contexts/LoadingContext";
+import { ToastProvider } from "./contexts/ToastContext";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import AppRoutes from "./routes";
 
 function App() {
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/board/:id" element={<Board />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-      </Routes>
-    </div>
+    <ErrorProvider>
+      <LoadingProvider>
+        <ToastProvider>
+          <ErrorBoundary>
+              <div className="min-h-screen bg-background text-foreground">
+                <AppRoutes />
+                <ToastContainer
+                  position="top-right"
+                  autoClose={3000}
+                  hideProgressBar={false}
+                  newestOnTop
+                  closeOnClick
+                  rtl={false}
+                  pauseOnFocusLoss
+                  draggable
+                  pauseOnHover
+                  theme="dark"
+                />
+              </div>
+          </ErrorBoundary>
+        </ToastProvider>
+      </LoadingProvider>
+    </ErrorProvider>
   );
 }
 

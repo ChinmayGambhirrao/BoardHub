@@ -1,11 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DragDropContext, Droppable } from "react-beautiful-dnd";
 import { Plus, MoreHorizontal } from "lucide-react";
+import { useParams } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import Column from "../components/Column";
 import Card from "../components/Card";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Badge } from "../components/ui/badge";
+import { LoadingSpinner, ProgressBar } from "../components/ui/loading-spinner";
+import { useError } from "../contexts/ErrorContext";
+import { useLoading } from "../contexts/LoadingContext";
+import { useToast } from "../contexts/ToastContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "../components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -102,7 +115,33 @@ const initialData = {
 };
 
 export default function Board() {
+  const { id } = useParams();
   const [data, setData] = useState(initialData);
+  const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
+  const { setError } = useError();
+  const { setComponentLoading, getComponentState, setProgressState } =
+    useLoading();
+  const { showSuccess, showError } = useToast();
+
+  // Simulate loading board data
+  useEffect(() => {
+    const loadBoard = async () => {
+      setComponentLoading("board", true, "Loading board...");
+      try {
+        // Simulate API call
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        setData(initialData);
+        showSuccess("Board loaded successfully");
+      } catch (error) {
+        setError("DATA_LOADING_ERROR", "Failed to load board data");
+        showError("Failed to load board data");
+      } finally {
+        setComponentLoading("board", false);
+      }
+    };
+
+    loadBoard();
+  }, [id, setComponentLoading, setError, showSuccess, showError]);
 
   const onDragEnd = (result) => {
     const { destination, source, draggableId, type } = result;
@@ -125,6 +164,7 @@ export default function Board() {
         ...data,
         columnOrder: newColumnOrder,
       });
+      showSuccess("Column reordered successfully");
       return;
     }
 
@@ -150,6 +190,7 @@ export default function Board() {
           [newColumn.id]: newColumn,
         },
       });
+      showSuccess("Card moved successfully");
       return;
     }
 
@@ -173,7 +214,37 @@ export default function Board() {
         },
       },
     });
+    showSuccess("Card moved successfully");
   };
+
+  const handleArchiveBoard = async () => {
+    setComponentLoading("board", true, "Archiving board...");
+    try {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      showSuccess("Board archived successfully");
+      // TODO: Redirect to dashboard
+    } catch (error) {
+      setError("UNEXPECTED_ERROR", "Failed to archive board");
+      showError("Failed to archive board");
+    } finally {
+      setComponentLoading("board", false);
+      setIsArchiveDialogOpen(false);
+    }
+  };
+
+  const boardState = getComponentState("board");
+
+  if (boardState.isLoading) {
+    return (
+      <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
+        <div className="text-center">
+          <LoadingSpinner size="lg" className="mb-4" />
+          <p className="text-muted-foreground">{boardState.message}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-[calc(100vh-4rem)] p-4 flex flex-col">
@@ -188,7 +259,7 @@ export default function Board() {
         <div className="flex items-center gap-2">
           {/* Avatars */}
           <div className="flex -space-x-2">
-            {boardInfo.members.map((member, idx) => (
+            {boardInfo.members.map((member) => (
               <Avatar
                 key={member.name}
                 className="h-8 w-8 border-2 border-background"
@@ -211,13 +282,51 @@ export default function Board() {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Board Actions</DropdownMenuLabel>
               <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem>Archive Board</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsArchiveDialogOpen(true)}>
+                Archive Board
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem>Copy Board Link</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
+
+      {/* Archive Board Dialog */}
+      <Dialog open={isArchiveDialogOpen} onOpenChange={setIsArchiveDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Archive Board</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to archive this board? This action cannot be
+            undone.
+          </p>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsArchiveDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleArchiveBoard}
+              disabled={boardState.isLoading}
+            >
+              {boardState.isLoading ? (
+                <>
+                  <LoadingSpinner size="sm" className="mr-2" />
+                  Archiving...
+                </>
+              ) : (
+                "Archive Board"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Board Columns */}
       <div className="flex-1 min-h-0">
         <DragDropContext onDragEnd={onDragEnd}>
