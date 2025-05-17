@@ -2,10 +2,11 @@ import axios from "axios";
 
 // Create an axios instance with default configuration
 const api = axios.create({
-  baseURL: "/api",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5001/api",
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true, // Important for OAuth
 });
 
 // Add a request interceptor to attach the auth token to each request
@@ -97,6 +98,20 @@ export const authAPI = {
   logout: () => {
     localStorage.removeItem("token");
     return Promise.resolve();
+  },
+
+  // Google OAuth login
+  loginWithGoogle: () => {
+    window.location.href = `${
+      import.meta.env.VITE_API_URL || "http://localhost:5001"
+    }/auth/google`;
+  },
+
+  // GitHub OAuth login
+  loginWithGithub: () => {
+    window.location.href = `${
+      import.meta.env.VITE_API_URL || "http://localhost:5001"
+    }/auth/github`;
   },
 };
 

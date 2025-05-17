@@ -6,13 +6,15 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AppRoutes from "./routes";
+import { AuthProvider } from "./contexts/AuthContext";
 
 function App() {
   return (
     <ErrorProvider>
       <LoadingProvider>
         <ToastProvider>
-          <ErrorBoundary>
+          <AuthProvider>
+            <ErrorBoundary>
               <div className="min-h-screen bg-background text-foreground">
                 <AppRoutes />
                 <ToastContainer
@@ -28,7 +30,8 @@ function App() {
                   theme="dark"
                 />
               </div>
-          </ErrorBoundary>
+            </ErrorBoundary>
+          </AuthProvider>
         </ToastProvider>
       </LoadingProvider>
     </ErrorProvider>

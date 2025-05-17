@@ -7,7 +7,6 @@ import { LoadingSpinner } from "./ui/loading-spinner";
 import { useError } from "../contexts/ErrorContext";
 import { useLoading } from "../contexts/LoadingContext";
 import { useToast } from "../contexts/ToastContext";
-import VirtualizedList from "./VirtualizedList";
 import CardForm from "./CardForm";
 import ColumnForm from "./ColumnForm";
 import {

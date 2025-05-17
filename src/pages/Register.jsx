@@ -1,199 +1,144 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import styled from "styled-components";
-import { authAPI } from "../api";
+import { useAuth } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
+import { FcGoogle } from "react-icons/fc";
+import { FaGithub } from "react-icons/fa";
 
-const AuthContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: calc(100vh - 50px);
-  background-color: #f9fafc;
-`;
-
-const AuthForm = styled.form`
-  background-color: white;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  padding: 32px;
-  border-radius: 3px;
-  width: 400px;
-`;
-
-const FormTitle = styled.h2`
-  margin-bottom: 24px;
-  text-align: center;
-  font-weight: bold;
-`;
-
-const FormGroup = styled.div`
-  margin-bottom: 16px;
-`;
-
-const Label = styled.label`
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #dfe1e6;
-  border-radius: 3px;
-  font-size: 16px;
-
-  &:focus {
-    border-color: #0079bf;
-    outline: none;
-  }
-`;
-
-const SubmitButton = styled.button`
-  width: 100%;
-  padding: 10px;
-  background-color: #0079bf;
-  color: white;
-  border: none;
-  border-radius: 3px;
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 16px;
-
-  &:hover {
-    background-color: #026aa7;
-  }
-
-  &:disabled {
-    background-color: #b3d1e2;
-    cursor: not-allowed;
-  }
-`;
-
-const ErrorMessage = styled.div`
-  color: #eb5a46;
-  margin-bottom: 16px;
-  text-align: center;
-`;
-
-const AuthLink = styled.div`
-  text-align: center;
-
-  a {
-    color: #0079bf;
-    text-decoration: underline;
-  }
-`;
-
-const Register = () => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+export default function Register() {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+  const { register, loginWithGoogle, loginWithGithub, loading, socialLoading } =
+    useAuth();
+  const { showError } = useToast();
   const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!name || !email || !password || !confirmPassword) {
-      setError("Please fill in all fields");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-
-    setIsLoading(true);
-    setError("");
-
     try {
-      // In a real app, you would make an API call
-      // const response = await authAPI.register({ name, email, password });
-      // localStorage.setItem('token', response.data.token);
-
-      // For now, simulate a successful registration
-      console.log("Registration attempt with:", { name, email, password });
-      localStorage.setItem("token", "fake-jwt-token");
-
-      // Redirect to dashboard
+      await register(formData);
       navigate("/");
     } catch (err) {
-      setError(
-        err.response?.data?.message || "Failed to register. Please try again."
-      );
-    } finally {
-      setIsLoading(false);
+      // Error is already handled in AuthContext
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      await loginWithGoogle();
+    } catch (err) {
+      // Error is already handled in AuthContext
+    }
+  };
+
+  const handleGithubLogin = async () => {
+    try {
+      await loginWithGithub();
+    } catch (err) {
+      // Error is already handled in AuthContext
     }
   };
 
   return (
-    <AuthContainer>
-      <AuthForm onSubmit={handleSubmit}>
-        <FormTitle>Sign up for BoardHub</FormTitle>
-
-        {error && <ErrorMessage>{error}</ErrorMessage>}
-
-        <FormGroup>
-          <Label htmlFor="name">Name</Label>
-          <Input
-            type="text"
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Enter your full name"
-            required
-          />
-        </FormGroup>
-
-        <FormGroup>
-          <Label htmlFor="email">Email</Label>
-          <Input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your email"
-            required
-          />
-        </FormGroup>
-
-        <FormGroup>
-          <Label htmlFor="password">Password</Label>
-          <Input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Create a password"
-            required
-          />
-        </FormGroup>
-
-        <FormGroup>
-          <Label htmlFor="confirmPassword">Confirm Password</Label>
-          <Input
-            type="password"
-            id="confirmPassword"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Confirm your password"
-            required
-          />
-        </FormGroup>
-
-        <SubmitButton type="submit" disabled={isLoading}>
-          {isLoading ? "Creating account..." : "Sign up"}
-        </SubmitButton>
-
-        <AuthLink>
-          Already have an account? <Link to="/login">Log in</Link>
-        </AuthLink>
-      </AuthForm>
-    </AuthContainer>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h2 className="text-2xl font-bold mb-6 text-center">Register</h2>
+        <div className="space-y-4">
+          <button
+            onClick={handleGoogleLogin}
+            disabled={loading || socialLoading.google}
+            className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <FcGoogle className="w-5 h-5" />
+            {socialLoading.google ? "Connecting..." : "Continue with Google"}
+          </button>
+          <button
+            onClick={handleGithubLogin}
+            disabled={loading || socialLoading.github}
+            className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <FaGithub className="w-5 h-5" />
+            {socialLoading.github ? "Connecting..." : "Continue with GitHub"}
+          </button>
+        </div>
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white text-gray-500">
+              Or continue with
+            </span>
+          </div>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Name
+            </label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              disabled={loading || socialLoading.google || socialLoading.github}
+              className="text-gray-600 mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Email
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              disabled={loading || socialLoading.google || socialLoading.github}
+              className="text-gray-600 mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Password
+            </label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              disabled={loading || socialLoading.google || socialLoading.github}
+              className="text-gray-600 mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading || socialLoading.google || socialLoading.github}
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? "Registering..." : "Register"}
+          </button>
+        </form>
+        <p className="mt-4 text-center text-sm text-gray-600">
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            className="font-medium text-indigo-600 hover:text-indigo-500"
+          >
+            Login
+          </Link>
+        </p>
+      </div>
+    </div>
   );
-};
-
-export default Register;
+}

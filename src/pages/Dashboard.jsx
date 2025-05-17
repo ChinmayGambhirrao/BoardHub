@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { X } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { X, Plus } from "lucide-react";
 import { Button } from "../components/ui/button";
 import {
   Select,
@@ -9,53 +9,83 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
+import { boardAPI } from "../api";
+
+const BOARD_COLORS = [
+  "#0079bf",
+  "#d29034",
+  "#519839",
+  "#b04632",
+  "#89609e",
+  "#cd5a91",
+  "#4bbf6b",
+  "#00aecc",
+  "#838c91",
+];
 
 const Dashboard = () => {
   const [personalBoards, setPersonalBoards] = useState([]);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const [showModal, setShowModal] = useState(false);
+  const [newBoardName, setNewBoardName] = useState("");
+  const [newBoardColor, setNewBoardColor] = useState(BOARD_COLORS[0]);
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
-    // Mock data for boards - in a real app, this would come from an API
-    const mockPersonalBoards = [
-      { id: "1", title: "Basic Board", background: "#0079bf", template: true },
-      {
-        id: "2",
-        title: "Kanban Template",
-        background: "#00c2e0",
-        template: true,
-      },
-      {
-        id: "3",
-        title: "Daily Task Management Template",
-        background: "#6e5dc6",
-        template: true,
-      },
-      {
-        id: "4",
-        title: "Remote Team Hub",
-        background: "#ff9f1a",
-        template: true,
-      },
-    ];
-
-    const mockRecentlyViewed = [
-      { id: "1", title: "Basic Board", background: "#0079bf", template: true },
-      {
-        id: "5",
-        title: "My Trello board",
-        background: "#a259ff",
-        template: false,
-      },
-    ];
-
-    setPersonalBoards(mockPersonalBoards);
-    setRecentlyViewed(mockRecentlyViewed);
-    setLoading(false);
+    const fetchBoards = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const res = await boardAPI.getBoards();
+        let boards = res.data || [];
+        // If user has no boards, add a default 'Basic Board' (only once)
+        if (boards.length === 0) {
+          const defaultBoard = await boardAPI.createBoard({
+            title: "Basic Board",
+            background: BOARD_COLORS[0],
+          });
+          boards = [defaultBoard.data];
+        }
+        setPersonalBoards(boards);
+      } catch (err) {
+        setError("Failed to load boards");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBoards();
   }, []);
+
+  const handleCreateBoard = async (e) => {
+    e.preventDefault();
+    if (!newBoardName.trim()) return;
+    setCreating(true);
+    try {
+      const res = await boardAPI.createBoard({
+        title: newBoardName,
+        background: newBoardColor,
+      });
+      setPersonalBoards((prev) => [res.data, ...prev]);
+      setShowModal(false);
+      setNewBoardName("");
+      setNewBoardColor(BOARD_COLORS[0]);
+      navigate(`/board/${res.data._id}`);
+    } catch (err) {
+      setError("Failed to create board");
+    } finally {
+      setCreating(false);
+    }
+  };
 
   if (loading) {
     return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="text-red-500">{error}</div>;
   }
 
   return (
@@ -192,27 +222,30 @@ const Dashboard = () => {
                 </Select>
               </div>
 
-              <div className="grid grid-cols-4 gap-4">
+              {/* Board grid */}
+              <div className="grid grid-cols-4 gap-4 mb-8">
+                {/* Create new board card */}
+                <div
+                  className="flex flex-col items-center justify-center h-32 rounded bg-white/10 hover:bg-white/20 cursor-pointer border-2 border-dashed border-white/20 transition"
+                  onClick={() => setShowModal(true)}
+                >
+                  <Plus className="w-8 h-8 text-white mb-2" />
+                  <span className="text-white font-semibold">
+                    Create new board
+                  </span>
+                </div>
+                {/* User boards */}
                 {personalBoards.map((board) => (
-                  <div key={board.id} className="relative overflow-hidden">
+                  <div key={board._id} className="relative overflow-hidden">
                     <Link
-                      to={`/board/${board.id}`}
-                      className="block h-32 rounded overflow-hidden"
+                      to={`/board/${board._id}`}
+                      className="block h-32 rounded overflow-hidden bg-gray-700 hover:bg-gray-600 transition"
+                      style={{ background: board.background || "#0079bf" }}
                     >
-                      <div
-                        className="h-full w-full p-2 flex flex-col justify-between hover:brightness-90 transition-all"
-                        style={{ backgroundColor: board.background }}
-                      >
-                        {board.template && (
-                          <div className="absolute top-2 right-2 bg-white/20 text-white text-xs px-1.5 py-0.5 rounded z-10">
-                            TEMPLATE
-                          </div>
-                        )}
-                        <div className="mt-8">
-                          <h3 className="text-white font-medium">
-                            {board.title}
-                          </h3>
-                        </div>
+                      <div className="flex items-end h-full p-4">
+                        <span className="text-white font-bold text-lg">
+                          {board.title}
+                        </span>
                       </div>
                     </Link>
                   </div>
@@ -268,6 +301,58 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+        {/* Modal for creating a board */}
+        {showModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-[#22272b] rounded-lg p-8 w-full max-w-sm shadow-lg relative">
+              <button
+                className="absolute top-2 right-2 text-white/70 hover:text-white"
+                onClick={() => setShowModal(false)}
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <h2 className="text-xl font-bold text-white mb-4">
+                Create board
+              </h2>
+              <form onSubmit={handleCreateBoard}>
+                <label className="block text-white/80 mb-2">Board name</label>
+                <input
+                  type="text"
+                  value={newBoardName}
+                  onChange={(e) => setNewBoardName(e.target.value)}
+                  className="w-full px-3 py-2 rounded bg-[#282E33] text-white mb-4 border border-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g. Project Launch"
+                  required
+                />
+                <label className="block text-white/80 mb-2">
+                  Background color
+                </label>
+                <div className="flex gap-2 mb-4">
+                  {BOARD_COLORS.map((color) => (
+                    <button
+                      type="button"
+                      key={color}
+                      className={`w-8 h-8 rounded-full border-2 ${
+                        newBoardColor === color
+                          ? "border-blue-500"
+                          : "border-transparent"
+                      }`}
+                      style={{ background: color }}
+                      onClick={() => setNewBoardColor(color)}
+                    />
+                  ))}
+                </div>
+                <button
+                  type="submit"
+                  disabled={creating}
+                  className="w-full py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
+                >
+                  {creating ? "Creating..." : "Create board"}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
