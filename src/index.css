@@ -1,0 +1,143 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 215 27% 14%; /* Dark background color to match Trello (#1D2125) */
+    --foreground: 0 0% 100%;
+
+    --card: 215 24% 18%; /* Slightly lighter dark color for cards (#282E33) */
+    --card-foreground: 0 0% 100%;
+ 
+    --popover: 215 24% 18%;
+    --popover-foreground: 0 0% 100%;
+ 
+    --primary: 207 100% 42%; /* Trello blue (#1976d2) */
+    --primary-foreground: 0 0% 100%;
+ 
+    --secondary: 214 9% 15%;
+    --secondary-foreground: 0 0% 100%;
+ 
+    --muted: 215 14% 25%;
+    --muted-foreground: 0 0% 70%;
+ 
+    --accent: 215 14% 25%;
+    --accent-foreground: 0 0% 100%;
+ 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 215 14% 25%;
+    --input: 215 14% 25%;
+    --ring: 207 100% 42%;
+ 
+    --radius: 0.25rem;
+  }
+}
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+  color: white;
+  background-color: #1D2125;
+  overscroll-behavior: none; /* Prevent pull-to-refresh on mobile */
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+ul {
+  list-style-type: none;
+}
+
+/* Fix for z-index stacking */
+header {
+  isolation: isolate;
+  position: relative;
+}
+
+header .dropdown-menu {
+  isolation: isolate;
+}
+
+.relative {
+  position: relative;
+}
+
+/* Mobile touch optimizations */
+.touch-manipulation {
+  touch-action: manipulation; /* Disable double-tap to zoom */
+}
+
+.touch-pan-x {
+  touch-action: pan-x; /* Allow horizontal swipe scrolling */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+/* Mobile dialog improvements */
+@media (max-width: 768px) {
+  /* Improve tapping on small screens */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Improve tap target sizes in dropdown menus */
+  .absolute button, .fixed button {
+    padding: 8px;
+  }
+  
+  /* Make sure modals don't overflow */
+  .fixed {
+    overflow-y: auto;
+  }
+}
+
+/* Custom scrollbar for desktop */
+@media (min-width: 769px) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+} 
