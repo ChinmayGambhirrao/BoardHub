@@ -57,10 +57,10 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-[#1D2125] text-white py-1 relative z-50">
-      <div className="flex items-center justify-between px-4">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center">
+    <header className="bg-[#1D2125] text-white py-1 relative z-50 w-full">
+      <div className="flex items-center justify-between px-2 sm:px-4 flex-wrap w-full">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+          <div className="flex items-center min-w-0">
             <button className="p-2 hover:bg-white/10 rounded">
               <svg
                 viewBox="0 0 24 24"
@@ -70,12 +70,12 @@ export default function Header() {
                 <path d="M4 5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5zm6 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V5zm6 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V5zM4 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-2zm6 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2zm6 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2zM4 17a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-2zm6 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2zm6 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2z" />
               </svg>
             </button>
-            <Link to="/" className="flex items-center ml-2">
-              <span className="font-bold text-lg">BoardHub</span>
+            <Link to="/" className="flex items-center ml-2 min-w-0">
+              <span className="font-bold text-lg truncate">BoardHub</span>
             </Link>
           </div>
-
-          <div className="flex items-center space-x-2">
+          {/* Nav links - hidden on mobile */}
+          <div className="hidden sm:flex items-center space-x-2">
             <Button
               variant="ghost"
               className="text-white hover:bg-white/10 h-8 px-3 py-1"
@@ -96,42 +96,44 @@ export default function Header() {
             </Button>
           </div>
         </div>
-
-        <div className="flex items-center gap-2">
-          <div className="relative">
+        <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+          {/* Search bar - hidden on mobile, show icon only */}
+          <div className="hidden sm:block relative min-w-0">
             <Input
               placeholder="Search"
-              className="bg-white/10 border-none h-8 w-64 text-sm pl-8 focus:bg-white focus:text-black"
+              className="bg-white/10 border-none h-8 w-64 text-sm pl-8 focus:bg-white focus:text-black min-w-0"
             />
             <Search className="absolute left-2 top-1.5 h-4 w-4 text-white" />
           </div>
-
+          <button
+            className="sm:hidden p-2 hover:bg-white/10 rounded"
+            aria-label="Search"
+          >
+            <Search className="h-5 w-5 text-white" />
+          </button>
           <Button
             variant="primary"
-            className="bg-[#1976d2] hover:bg-[#1565c0] text-white h-8 px-3 py-1"
+            className="bg-[#1976d2] hover:bg-[#1565c0] text-white h-8 px-3 py-1 min-w-0"
           >
             Create
           </Button>
-
           <Button
             variant="ghost"
-            className="text-white hover:bg-white/10 p-1 h-8 w-8"
+            className="text-white hover:bg-white/10 p-1 h-8 w-8 min-w-0"
           >
             <Bell className="h-5 w-5" />
           </Button>
-
           <Button
             variant="ghost"
-            className="text-white hover:bg-white/10 p-1 h-8 w-8"
+            className="text-white hover:bg-white/10 p-1 h-8 w-8 min-w-0"
           >
             <HelpCircle className="h-5 w-5" />
           </Button>
-
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="relative h-8 w-8 rounded-full hover:bg-white/10 z-50"
+                className="relative h-8 w-8 rounded-full hover:bg-white/10 z-50 min-w-0"
               >
                 <Avatar className="h-8 w-8 bg-orange-500">
                   <AvatarFallback>{getInitials(user)}</AvatarFallback>

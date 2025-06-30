@@ -462,7 +462,7 @@ export default function Board() {
         >
           {(provided) => (
             <div
-              className="flex gap-3 md:gap-4 px-3 md:px-8 py-4 md:py-8 overflow-x-auto pb-8 touch-pan-x min-h-[calc(100vh-80px)]"
+              className="flex flex-col gap-4 px-2 py-4 md:flex-row md:gap-4 md:px-8 md:py-8 md:overflow-x-auto md:pb-8 md:touch-pan-x min-h-[calc(100vh-80px)]"
               ref={provided.innerRef}
               {...provided.droppableProps}
             >

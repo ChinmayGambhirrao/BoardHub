@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { X, Plus } from "lucide-react";
+import { X, Plus, Menu as MenuIcon } from "lucide-react";
 import { Button } from "../components/ui/button";
 import {
   Select,
@@ -33,6 +33,7 @@ const Dashboard = () => {
   const [newBoardName, setNewBoardName] = useState("");
   const [newBoardColor, setNewBoardColor] = useState(BOARD_COLORS[0]);
   const [creating, setCreating] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     const fetchBoards = async () => {
@@ -90,10 +91,113 @@ const Dashboard = () => {
 
   return (
     <div className="bg-[#1D2125] min-h-screen">
+      {/* Hamburger for mobile */}
+      <button
+        className="sm:hidden p-3 text-white focus:outline-none"
+        onClick={() => setDrawerOpen(true)}
+        aria-label="Open sidebar menu"
+      >
+        <MenuIcon className="w-6 h-6" />
+      </button>
+      {/* Sidebar Drawer for mobile */}
+      {drawerOpen && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex">
+          <div className="bg-[#22272b] w-64 h-full p-4 overflow-y-auto relative">
+            <button
+              className="absolute top-2 right-2 text-white/70 hover:text-white"
+              onClick={() => setDrawerOpen(false)}
+              aria-label="Close sidebar menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="flex flex-col space-y-1 mt-8">
+              <Button
+                variant="ghost"
+                className="justify-start text-white hover:bg-white/10 h-8"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4 mr-2"
+                  fill="currentColor"
+                >
+                  <path d="M3 5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm2 1v13h14V6H5z" />
+                </svg>
+                Boards
+              </Button>
+              <Button
+                variant="ghost"
+                className="justify-start text-white/70 hover:bg-white/10 h-8"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4 mr-2"
+                  fill="currentColor"
+                >
+                  <path d="M4 4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2H4zm16 2v12H4V6h16z M6 8h12v2H6V8zm0 4h12v2H6v-2zm0 4h8v2H6v-2z" />
+                </svg>
+                Templates
+              </Button>
+              <Button
+                variant="ghost"
+                className="justify-start text-white/70 hover:bg-white/10 h-8"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4 mr-2"
+                  fill="currentColor"
+                >
+                  <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+                </svg>
+                Home
+              </Button>
+            </div>
+            <div className="mt-8">
+              <h3 className="text-sm font-medium text-white/70 mb-2">
+                Workspaces
+              </h3>
+              <div className="flex items-center py-1.5 px-2 bg-white/10 rounded mb-1">
+                <div className="h-8 w-8 bg-teal-600 rounded flex items-center justify-center text-white mr-2">
+                  T
+                </div>
+                <span className="text-white font-medium">
+                  BoardHub Workspace
+                </span>
+              </div>
+              <div className="flex flex-col pl-10 space-y-1">
+                <Button
+                  variant="ghost"
+                  className="justify-start text-white/70 hover:bg-white/10 h-8"
+                >
+                  Boards
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="justify-start text-white/70 hover:bg-white/10 h-8"
+                >
+                  Members
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="justify-start text-white/70 hover:bg-white/10 h-8"
+                >
+                  Settings
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="justify-start text-white/70 hover:bg-white/10 h-8"
+                >
+                  Billing
+                </Button>
+              </div>
+            </div>
+          </div>
+          <div className="flex-1" onClick={() => setDrawerOpen(false)} />
+        </div>
+      )}
       <div className="max-w-[1200px] mx-auto py-10 px-4">
         {/* Boards section */}
         <div className="flex items-start mb-8">
-          <div className="w-64 mr-6">
+          <div className="w-64 mr-6 hidden sm:block">
             <div className="flex flex-col space-y-1">
               <Button
                 variant="ghost"
@@ -223,7 +327,7 @@ const Dashboard = () => {
               </div>
 
               {/* Board grid */}
-              <div className="grid grid-cols-4 gap-4 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
                 {/* Create new board card */}
                 <div
                   className="flex flex-col items-center justify-center h-32 rounded bg-white/10 hover:bg-white/20 cursor-pointer border-2 border-dashed border-white/20 transition"
@@ -272,7 +376,7 @@ const Dashboard = () => {
                 Recently viewed
               </h2>
 
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {recentlyViewed.map((board) => (
                   <div key={board.id} className="relative overflow-hidden">
                     <Link

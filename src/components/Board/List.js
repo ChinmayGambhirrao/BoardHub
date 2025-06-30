@@ -1,74 +1,6 @@
 import React, { useState } from "react";
 import { Droppable } from "react-beautiful-dnd";
-import styled from "styled-components";
 import Card from "./Card";
-
-const ListContainer = styled.div`
-  background-color: #ebecf0;
-  border-radius: 3px;
-  min-width: 272px;
-  max-width: 272px;
-  margin-right: 8px;
-  height: fit-content;
-  max-height: calc(100vh - 120px);
-  display: flex;
-  flex-direction: column;
-`;
-
-const ListHeader = styled.div`
-  padding: 10px 8px;
-  position: relative;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const ListTitle = styled.h3`
-  font-weight: 600;
-  font-size: 14px;
-  margin: 0;
-`;
-
-const CardList = styled.div`
-  padding: 0 8px;
-  overflow-y: auto;
-  flex-grow: 1;
-`;
-
-const AddCardButton = styled.button`
-  margin: 8px;
-  padding: 8px;
-  color: #5e6c84;
-  background: none;
-  width: calc(100% - 16px);
-  text-align: left;
-  border-radius: 3px;
-
-  &:hover {
-    background-color: rgba(9, 30, 66, 0.08);
-    color: #172b4d;
-  }
-`;
-
-const AddCardForm = styled.form`
-  padding: 0 8px 8px 8px;
-`;
-
-const CardTextarea = styled.textarea`
-  width: 100%;
-  border: none;
-  resize: none;
-  padding: 8px;
-  border-radius: 3px;
-  box-shadow: 0 1px 0 rgba(9, 30, 66, 0.25);
-  font-family: inherit;
-  margin-bottom: 8px;
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  align-items: center;
-`;
 
 const List = ({ list, index }) => {
   const [isAddingCard, setIsAddingCard] = useState(false);
@@ -77,59 +9,70 @@ const List = ({ list, index }) => {
   const handleAddCard = (e) => {
     e.preventDefault();
     if (!newCardText.trim()) return;
-
     // Here you would call an API to add the card
     // For now, just log it
     console.log("Adding card:", newCardText, "to list:", list.id);
-
     setNewCardText("");
     setIsAddingCard(false);
   };
 
   return (
-    <ListContainer>
-      <ListHeader>
-        <ListTitle>{list.title}</ListTitle>
-      </ListHeader>
-
+    <div
+      className="bg-[#ebecf0] rounded min-w-[272px] max-w-[272px] mr-2 h-fit max-h-[calc(100vh-120px)] flex flex-col \
+      sm:min-w-full sm:max-w-full sm:mr-0 sm:mb-4 sm:px-2 sm:py-2"
+    >
+      <div className="p-2 flex justify-between items-center relative">
+        <h3 className="font-semibold text-sm m-0">{list.title}</h3>
+      </div>
       <Droppable droppableId={list.id} type="CARD">
         {(provided) => (
-          <CardList ref={provided.innerRef} {...provided.droppableProps}>
+          <div
+            ref={provided.innerRef}
+            {...provided.droppableProps}
+            className="px-2 overflow-y-auto flex-grow"
+          >
             {list.cards.map((card, index) => (
               <Card key={card.id} card={card} index={index} />
             ))}
             {provided.placeholder}
-          </CardList>
+          </div>
         )}
       </Droppable>
-
       {isAddingCard ? (
-        <AddCardForm onSubmit={handleAddCard}>
-          <CardTextarea
+        <form className="px-2 pb-2" onSubmit={handleAddCard}>
+          <textarea
             value={newCardText}
             onChange={(e) => setNewCardText(e.target.value)}
             placeholder="Enter a title for this card..."
             autoFocus
+            className="w-full border-none resize-none p-2 rounded shadow text-sm mb-2 font-sans focus:outline-none focus:ring-2 focus:ring-blue-400"
+            rows={2}
           />
-          <ButtonGroup>
-            <button className="btn btn-primary" type="submit">
+          <div className="flex items-center gap-2">
+            <button
+              className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+              type="submit"
+            >
               Add Card
             </button>
             <button
-              className="btn btn-secondary"
+              className="bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm"
               type="button"
               onClick={() => setIsAddingCard(false)}
             >
               Cancel
             </button>
-          </ButtonGroup>
-        </AddCardForm>
+          </div>
+        </form>
       ) : (
-        <AddCardButton onClick={() => setIsAddingCard(true)}>
+        <button
+          className="m-2 p-2 text-[#5e6c84] bg-none w-[calc(100%-16px)] text-left rounded hover:bg-gray-200 hover:text-[#172b4d] transition-colors text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          onClick={() => setIsAddingCard(true)}
+        >
           + Add a card
-        </AddCardButton>
+        </button>
       )}
-    </ListContainer>
+    </div>
   );
 };
 
