@@ -299,9 +299,6 @@ const Dashboard = () => {
                     Most popular templates
                   </h2>
                 </div>
-                <button className="text-white/70 hover:text-white">
-                  <X className="h-5 w-5" />
-                </button>
               </div>
 
               <p className="text-white/70 mb-6">
