@@ -1,3 +1,7 @@
+// import useState from "react";
+import { useNavigate } from "react-router-dom";
+import { boardAPI } from "../api";
+
 import { Search, Bell, HelpCircle, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -13,6 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { authAPI } from "../api";
+import { useAuth } from "../contexts/AuthContext";
 
 const MENU_ITEMS = [
   { label: "Profile", key: "profile" },
@@ -21,9 +26,11 @@ const MENU_ITEMS = [
 ];
 
 export default function Header() {
-  const [user, setUser] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const { user } = useAuth();
+  const [boardName, setBoardName] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -100,6 +107,8 @@ export default function Header() {
           {/* Search bar - hidden on mobile, show icon only */}
           <div className="hidden sm:block relative min-w-0">
             <Input
+              value={boardName}
+              onChange={(e) => setBoardName(e.target.value)}
               placeholder="Search"
               className="bg-white/10 border-none h-8 w-64 text-sm pl-8 focus:bg-white focus:text-black min-w-0"
             />
@@ -114,6 +123,18 @@ export default function Header() {
           <Button
             variant="primary"
             className="bg-[#1976d2] hover:bg-[#1565c0] text-white h-8 px-3 py-1 min-w-0"
+            onClick={async () => {
+              if (!boardName.trim()) return;
+              try {
+                const res = await boardAPI.createBoard({
+                  title: boardName.trim(),
+                });
+                setBoardName(""); // Clear the input
+                navigate(`/board/${res.data._id}`); // Use singular 'board' to match Dashboard
+              } catch (error) {
+                alert("Failed to create board");
+              }
+            }}
           >
             Create
           </Button>

@@ -104,24 +104,11 @@ export default function Board() {
       setLoading(true);
       setError("");
       try {
-        let res = await boardAPI.getBoard(id);
-        // If board has no lists, add sample lists/cards
-        if (!res.data.lists || res.data.lists.length === 0) {
-          for (const sampleList of SAMPLE_LISTS) {
-            const listRes = await listAPI.createList(id, {
-              title: sampleList.title,
-            });
-            for (const card of sampleList.cards) {
-              await cardAPI.createCard(listRes.data._id, { title: card.title });
-            }
-          }
-          res = await boardAPI.getBoard(id);
-        }
-
+        const res = await boardAPI.getBoard(id);
         // Process the board data to ensure IDs are strings
         const processedBoard = {
           ...res.data,
-          lists: res.data.lists.map((list) => ({
+          lists: (res.data.lists || []).map((list) => ({
             ...list,
             _id: String(list._id),
             cards: (list.cards || []).map((card) => ({
@@ -130,7 +117,6 @@ export default function Board() {
             })),
           })),
         };
-
         setBoard(processedBoard);
         showSuccess("Board loaded successfully");
       } catch (err) {
@@ -421,7 +407,10 @@ export default function Board() {
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
-  if (!board) return null;
+  if (!board)
+    return (
+      <div className="text-red-500">Board not found or failed to load.</div>
+    );
 
   return (
     <div
