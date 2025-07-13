@@ -8,6 +8,7 @@ import "react-toastify/dist/ReactToastify.css";
 import AppRoutes from "./routes";
 import { AuthProvider } from "./contexts/AuthContext";
 import { useEffect } from "react";
+import "./index.css";
 
 function App() {
   // Add viewport meta tag for mobile devices

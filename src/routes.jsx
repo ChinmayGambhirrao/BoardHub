@@ -3,6 +3,7 @@ import Board from "./pages/Board";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Landing from "./pages/Landing";
 import Header from "./components/Header";
 import { useAuth } from "./contexts/AuthContext";
 import OAuthSuccess from "./pages/OAuthSuccess";
@@ -14,17 +15,17 @@ function PrivateRoute({ children }) {
 }
 
 export default function AppRoutes() {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) return null; // or a loading spinner
+
   return (
     <>
-      <Header />
+      {isAuthenticated && <Header />}
       <Routes>
         <Route
           path="/"
-          element={
-            <PrivateRoute>
-              <Dashboard />
-            </PrivateRoute>
-          }
+          element={isAuthenticated ? <Dashboard /> : <Landing />}
         />
         <Route
           path="/board/:id"
