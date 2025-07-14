@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { X, Plus, Menu as MenuIcon } from "lucide-react";
 import { Button } from "../components/ui/button";
@@ -34,6 +34,10 @@ const Dashboard = () => {
   const [newBoardColor, setNewBoardColor] = useState(BOARD_COLORS[0]);
   const [creating, setCreating] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [boardsPerRow, setBoardsPerRow] = useState(4); // default to 4 for desktop
+  const gridRef = useRef(null);
+  const cardRef = useRef(null);
 
   useEffect(() => {
     const fetchBoards = async () => {
@@ -58,6 +62,21 @@ const Dashboard = () => {
       }
     };
     fetchBoards();
+  }, []);
+
+  // Calculate boards per row responsively
+  useEffect(() => {
+    function calculateBoardsPerRow() {
+      if (!gridRef.current || !cardRef.current) return;
+      const gridWidth = gridRef.current.offsetWidth;
+      const cardWidth = cardRef.current.offsetWidth;
+      if (cardWidth === 0) return;
+      const perRow = Math.max(1, Math.floor(gridWidth / cardWidth));
+      setBoardsPerRow(perRow);
+    }
+    calculateBoardsPerRow();
+    window.addEventListener("resize", calculateBoardsPerRow);
+    return () => window.removeEventListener("resize", calculateBoardsPerRow);
   }, []);
 
   const handleCreateBoard = async (e) => {
@@ -324,11 +343,15 @@ const Dashboard = () => {
               </div>
 
               {/* Board grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+              <div
+                className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8"
+                ref={gridRef}
+              >
                 {/* Create new board card */}
                 <div
                   className="flex flex-col items-center justify-center h-32 rounded bg-white/10 hover:bg-white/20 cursor-pointer border-2 border-dashed border-white/20 transition"
                   onClick={() => setShowModal(true)}
+                  ref={cardRef}
                 >
                   <Plus className="w-8 h-8 text-white mb-2" />
                   <span className="text-white font-semibold">
@@ -336,7 +359,10 @@ const Dashboard = () => {
                   </span>
                 </div>
                 {/* User boards */}
-                {personalBoards.map((board) => (
+                {(expanded
+                  ? personalBoards
+                  : personalBoards.slice(0, boardsPerRow * 2)
+                ).map((board) => (
                   <div key={board._id} className="relative overflow-hidden">
                     <Link
                       to={`/board/${board._id}`}
@@ -352,6 +378,18 @@ const Dashboard = () => {
                   </div>
                 ))}
               </div>
+              {/* View More / Show Less button */}
+              {personalBoards.length > boardsPerRow * 2 && (
+                <div className="flex justify-center mb-4">
+                  <Button
+                    variant="outline"
+                    className="text-blue-400 border-blue-400 hover:bg-blue-400 hover:text-white"
+                    onClick={() => setExpanded((prev) => !prev)}
+                  >
+                    {expanded ? "Show Less" : "View More"}
+                  </Button>
+                </div>
+              )}
 
               <div className="mt-4">
                 <a href="#" className="text-blue-400 hover:underline text-sm">
