@@ -15,6 +15,7 @@ import { boardAPI, listAPI, cardAPI } from "../api";
 import { useToast } from "../contexts/ToastContext";
 import { Dialog } from "../components/ui/dialog";
 import Card from "../components/Card";
+import CardModal from "../components/CardModal";
 
 const SAMPLE_LISTS = [
   {
@@ -184,7 +185,10 @@ export default function Board() {
       for (const card of undoData.cards) {
         await cardAPI.createCard(res.data._id, {
           title: card.title,
-          description: card.description,
+          description: card.description || "",
+          labels: card.labels || [],
+          checklists: card.checklists || [],
+          dueDate: card.dueDate || { start: null, end: null },
         });
       }
       // Refresh board
@@ -201,8 +205,16 @@ export default function Board() {
 
   // Add a new card to a list
   const handleAddCard = async (listId, cardData) => {
+    // Ensure new card uses the new structure
+    const newCard = {
+      title: cardData.title || "",
+      description: cardData.description || "",
+      labels: cardData.labels || [],
+      checklists: cardData.checklists || [],
+      dueDate: cardData.dueDate || { start: null, end: null },
+    };
     try {
-      const res = await cardAPI.createCard(listId, cardData);
+      const res = await cardAPI.createCard(listId, newCard);
       setBoard((prev) => ({
         ...prev,
         lists: prev.lists.map((list) =>
@@ -218,9 +230,9 @@ export default function Board() {
   };
 
   // Edit a card
-  const handleEditCard = async (cardId, listId, newTitle) => {
+  const handleEditCard = async (cardId, listId, updatedFields) => {
     try {
-      await cardAPI.updateCard(cardId, { title: newTitle });
+      await cardAPI.updateCard(cardId, updatedFields);
       setBoard((prev) => ({
         ...prev,
         lists: prev.lists.map((list) =>
@@ -228,7 +240,7 @@ export default function Board() {
             ? {
                 ...list,
                 cards: list.cards.map((card) =>
-                  card._id === cardId ? { ...card, title: newTitle } : card
+                  card._id === cardId ? { ...card, ...updatedFields } : card
                 ),
               }
             : list
@@ -660,48 +672,27 @@ export default function Board() {
           )}
         </Droppable>
       </DragDropContext>
-      {/* Card modal - Made responsive */}
+      {/* Render CardModal if a card is selected */}
       {selectedCard && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 p-4 md:p-0">
-          <div className="bg-[#22272b] rounded-lg p-4 md:p-8 w-full max-w-lg shadow-lg relative max-h-[90vh] overflow-y-auto">
-            <button
-              className="absolute top-2 right-2 text-white/70 hover:text-white"
-              onClick={closeCardModal}
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <h2 className="text-xl md:text-2xl font-bold text-white mb-4 pr-6">
-              {selectedCard.title}
-            </h2>
-            <label className="block text-white/80 mb-2 text-sm md:text-base">
-              Description
-            </label>
-            <textarea
-              className="w-full px-3 py-2 rounded bg-[#282E33] text-white mb-4 border border-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
-              placeholder="Add a more detailed description..."
-              value={selectedCard.description || ""}
-              onChange={(e) => {
-                setSelectedCard({
-                  ...selectedCard,
-                  description: e.target.value,
-                });
-                debouncedSaveDescription(
-                  selectedCard._id,
-                  e.target.value,
-                  selectedCard.list._id
-                );
-              }}
-            />
-            <div className="flex justify-between items-center mt-4">
-              <div className="text-white/80 font-semibold text-sm md:text-base">
-                Actions
-              </div>
-              <Button size="sm" onClick={openMoveDialog}>
-                Move
-              </Button>
-            </div>
-          </div>
-        </div>
+        <CardModal
+          card={selectedCard}
+          onClose={closeCardModal}
+          onUpdate={(updatedCard) => {
+            setBoard((prev) => ({
+              ...prev,
+              lists: prev.lists.map((list) =>
+                list._id === selectedCard.list._id
+                  ? {
+                      ...list,
+                      cards: list.cards.map((c) =>
+                        c._id === updatedCard._id ? updatedCard : c
+                      ),
+                    }
+                  : list
+              ),
+            }));
+          }}
+        />
       )}
       {/* Move card dialog - Made responsive */}
       {showMoveDialog && selectedCard && (

@@ -32,7 +32,15 @@ const List = ({ list, index }) => {
             className="px-2 overflow-y-auto flex-grow"
           >
             {list.cards.map((card, index) => (
-              <Card key={card.id} card={card} index={index} />
+              <Card
+                key={card.id || card._id}
+                card={card}
+                index={index}
+                listId={list.id || list._id}
+                onOpenCard={
+                  typeof onOpenCard === "function" ? onOpenCard : undefined
+                }
+              />
             ))}
             {provided.placeholder}
           </div>

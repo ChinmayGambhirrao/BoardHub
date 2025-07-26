@@ -47,12 +47,22 @@ const Card = ({ card, index, listId, onOpenCard, onDeleteCard }) => {
   // Use our swipe hook
   useSwipe(handleSwipeLeft, handleSwipeRight);
 
-  // Checklist progress
-  const checklistTotal = card.checklist?.total || 0;
-  const checklistCompleted = card.checklist?.completed || 0;
+  // Checklist progress (for new structure)
+  let checklistTotal = 0;
+  let checklistCompleted = 0;
+  if (Array.isArray(card.checklists) && card.checklists.length > 0) {
+    card.checklists.forEach((cl) => {
+      checklistTotal += cl.items.length;
+      checklistCompleted += cl.items.filter((item) => item.checked).length;
+    });
+  }
   const checklistProgress = checklistTotal
     ? Math.round((checklistCompleted / checklistTotal) * 100)
     : 0;
+
+  // Overdue check
+  const isOverdue =
+    card.dueDate && card.dueDate.end && new Date(card.dueDate.end) < new Date();
 
   return (
     <Draggable draggableId={card._id} index={index}>
@@ -66,7 +76,7 @@ const Card = ({ card, index, listId, onOpenCard, onDeleteCard }) => {
           {...provided.dragHandleProps}
           className={`relative bg-gray-800 rounded p-2 md:p-3 mb-2 flex flex-col gap-1 md:gap-2 cursor-pointer hover:bg-gray-700 transition touch-manipulation ${
             snapshot.isDragging ? "opacity-70" : ""
-          }`}
+          } ${isOverdue ? "ring-2 ring-red-500" : ""}`}
           style={{
             ...provided.draggableProps.style,
             transform: `${
@@ -80,6 +90,21 @@ const Card = ({ card, index, listId, onOpenCard, onDeleteCard }) => {
           }}
           onTouchEnd={handleTouchEnd}
         >
+          {/* Labels */}
+          {Array.isArray(card.labels) && card.labels.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-1">
+              {card.labels.map((label, i) => (
+                <span
+                  key={label.name + i}
+                  className="px-2 py-0.5 rounded text-xs font-semibold"
+                  style={{ backgroundColor: label.color, color: "#fff" }}
+                >
+                  {label.name}
+                </span>
+              ))}
+            </div>
+          )}
+
           <span className="text-white text-sm md:text-base pr-2">
             {card.title}
           </span>
@@ -87,6 +112,33 @@ const Card = ({ card, index, listId, onOpenCard, onDeleteCard }) => {
             <span className="text-gray-300 text-xs mt-1 line-clamp-2">
               {card.description}
             </span>
+          )}
+
+          {/* Due Date */}
+          {card.dueDate && card.dueDate.end && (
+            <div className="flex items-center gap-1 mt-1">
+              <Calendar
+                size={14}
+                className={isOverdue ? "text-red-400" : "text-blue-400"}
+              />
+              <span
+                className={`text-xs ${
+                  isOverdue ? "text-red-400" : "text-blue-200"
+                }`}
+              >
+                {format(new Date(card.dueDate.end), "MMM d, yyyy")}
+              </span>
+            </div>
+          )}
+
+          {/* Checklist Progress */}
+          {checklistTotal > 0 && (
+            <div className="flex items-center gap-1 mt-1">
+              <CheckSquare size={14} className="text-green-400" />
+              <span className="text-xs text-green-200">
+                ✓ {checklistCompleted}/{checklistTotal}
+              </span>
+            </div>
           )}
 
           {/* Mobile swipe action */}
