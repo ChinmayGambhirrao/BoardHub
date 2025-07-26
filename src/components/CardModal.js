@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 import { format } from "date-fns";
 import { DayPicker } from "react-day-picker";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import "react-day-picker/dist/style.css"; // Import default calendar styles
 
 const CardModal = ({ card, onClose, onUpdate, onDelete }) => {
   // Local state for editing
@@ -129,319 +130,328 @@ const CardModal = ({ card, onClose, onUpdate, onDelete }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-auto p-6 relative">
+      <div className="bg-[#22272b] rounded-lg shadow-xl max-w-2xl w-full mx-auto p-0 relative border border-gray-700 max-h-[90vh] flex flex-col">
+        {/* Fixed close button */}
         <button
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"
+          className="absolute top-4 right-4 text-white/70 hover:text-white z-20"
           onClick={onClose}
+          style={{ zIndex: 2 }}
         >
           <X className="h-6 w-6" />
         </button>
-        <div className="mb-4">
-          <input
-            className="w-full text-2xl font-bold mb-2 border-b border-gray-200 focus:outline-none focus:border-blue-400 bg-transparent"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Card title"
-            autoFocus
-          />
-          <textarea
-            className="w-full text-base border-b border-gray-200 focus:outline-none focus:border-blue-400 bg-transparent resize-none mb-2"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Add a description..."
-            rows={2}
-          />
-        </div>
-        {/* Labels */}
-        <div className="mb-4">
-          <div className="flex gap-2 mb-2 flex-wrap">
-            {labels.map((label, i) => (
-              <span
-                key={label.name + i}
-                className="px-2 py-0.5 rounded text-xs font-semibold flex items-center"
-                style={{ backgroundColor: label.color, color: "#fff" }}
-              >
-                {label.name}
-                <button
-                  className="ml-2 text-xs text-white hover:text-gray-200"
-                  onClick={() => handleDeleteLabel(i)}
-                  title="Remove label"
+        {/* Scrollable content */}
+        <div className="p-6 overflow-y-auto flex-1">
+          <div className="mb-4">
+            <input
+              className="w-full text-2xl font-bold mb-2 border-b border-gray-700 focus:outline-none focus:border-blue-500 bg-transparent text-white placeholder:text-gray-400"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Card title"
+              autoFocus
+            />
+            <textarea
+              className="w-full text-base border-b border-gray-700 focus:outline-none focus:border-blue-500 bg-transparent resize-none mb-2 text-white placeholder:text-gray-400"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Add a description..."
+              rows={2}
+            />
+          </div>
+          {/* Labels */}
+          <div className="mb-4">
+            <div className="flex gap-2 mb-2 flex-wrap">
+              {labels.map((label, i) => (
+                <span
+                  key={label.name + i}
+                  className="px-2 py-0.5 rounded text-xs font-semibold flex items-center bg-gray-800"
+                  style={{ backgroundColor: label.color, color: "#fff" }}
                 >
-                  ×
-                </button>
-              </span>
-            ))}
+                  {label.name}
+                  <button
+                    className="ml-2 text-xs text-white hover:text-gray-300"
+                    onClick={() => handleDeleteLabel(i)}
+                    title="Remove label"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-2 items-center">
+              <input
+                type="text"
+                className="border border-gray-700 rounded px-2 py-1 text-xs bg-gray-900 text-white placeholder:text-gray-400"
+                value={labelInput}
+                onChange={(e) => setLabelInput(e.target.value)}
+                placeholder="Label name"
+              />
+              <input
+                type="color"
+                value={labelColor}
+                onChange={(e) => setLabelColor(e.target.value)}
+                className="w-8 h-8 p-0 border-none bg-transparent"
+                title="Pick label color"
+              />
+              <button
+                className="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700"
+                onClick={handleAddLabel}
+                type="button"
+              >
+                Add label
+              </button>
+            </div>
           </div>
-          <div className="flex gap-2 items-center">
-            <input
-              type="text"
-              className="border rounded px-2 py-1 text-xs"
-              value={labelInput}
-              onChange={(e) => setLabelInput(e.target.value)}
-              placeholder="Label name"
-            />
-            <input
-              type="color"
-              value={labelColor}
-              onChange={(e) => setLabelColor(e.target.value)}
-              className="w-8 h-8 p-0 border-none bg-transparent"
-              title="Pick label color"
-            />
-            <button
-              className="bg-blue-600 text-white px-2 py-1 rounded text-xs"
-              onClick={handleAddLabel}
-              type="button"
-            >
-              Add label
-            </button>
-          </div>
-        </div>
-        {/* Due Date */}
-        <div className="mb-4 flex gap-4 flex-wrap">
-          <div>
-            <div className="text-xs font-semibold mb-1">Start Date</div>
-            <DayPicker
-              mode="single"
-              selected={dueDate.start ? new Date(dueDate.start) : undefined}
-              onSelect={(date) => handleDateChange("start", date)}
-            />
-            {dueDate.start && (
-              <div className="text-xs mt-1">
-                {format(new Date(dueDate.start), "MMM d, yyyy")}
+          {/* Due Date */}
+          <div className="mb-4 flex gap-4 flex-wrap">
+            <div>
+              <div className="text-xs font-semibold mb-1 text-white">
+                Start Date
               </div>
-            )}
-          </div>
-          <div>
-            <div className="text-xs font-semibold mb-1">End Date</div>
-            <DayPicker
-              mode="single"
-              selected={dueDate.end ? new Date(dueDate.end) : undefined}
-              onSelect={(date) => handleDateChange("end", date)}
-            />
-            {dueDate.end && (
-              <div className="text-xs mt-1">
-                {format(new Date(dueDate.end), "MMM d, yyyy")}
-              </div>
-            )}
-          </div>
-        </div>
-        {/* Checklists */}
-        <div className="mb-4">
-          <div className="flex gap-2 mb-2">
-            <input
-              type="text"
-              className="border rounded px-2 py-1 text-xs"
-              value={newChecklistTitle}
-              onChange={(e) => setNewChecklistTitle(e.target.value)}
-              placeholder="Checklist title"
-            />
-            <button
-              className="bg-green-600 text-white px-2 py-1 rounded text-xs"
-              onClick={handleAddChecklist}
-              type="button"
-            >
-              Add Checklist
-            </button>
-          </div>
-          <DragDropContext onDragEnd={onDragEnd}>
-            <Droppable droppableId="checklists" type="checklist">
-              {(provided) => (
-                <div ref={provided.innerRef} {...provided.droppableProps}>
-                  {checklists.map((cl, clIdx) => (
-                    <Draggable key={cl.id} draggableId={cl.id} index={clIdx}>
-                      {(provided) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          className="bg-gray-100 rounded p-2 mb-2"
-                        >
-                          <div className="flex items-center gap-2 mb-1">
-                            <span
-                              {...provided.dragHandleProps}
-                              className="cursor-move"
-                            >
-                              ☰
-                            </span>
-                            <input
-                              className="font-semibold text-xs border-b border-gray-300 bg-transparent flex-1"
-                              value={cl.title}
-                              onChange={(e) =>
-                                handleChecklistTitleChange(
-                                  cl.id,
-                                  e.target.value
-                                )
-                              }
-                            />
-                            <button
-                              className="text-xs text-red-500 ml-2"
-                              onClick={() => handleDeleteChecklist(cl.id)}
-                              type="button"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                          {/* Checklist items */}
-                          <Droppable droppableId={cl.id} type={`${cl.id}:item`}>
-                            {(provided) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.droppableProps}
-                              >
-                                {cl.items.map((item, idx) => (
-                                  <Draggable
-                                    key={item.id}
-                                    draggableId={item.id}
-                                    index={idx}
-                                  >
-                                    {(provided) => (
-                                      <div
-                                        ref={provided.innerRef}
-                                        {...provided.draggableProps}
-                                        className="flex items-center gap-2 mb-1"
-                                      >
-                                        <span
-                                          {...provided.dragHandleProps}
-                                          className="cursor-move"
-                                        >
-                                          ⋮
-                                        </span>
-                                        <input
-                                          type="checkbox"
-                                          checked={item.checked}
-                                          onChange={() =>
-                                            handleToggleChecklistItem(
-                                              cl.id,
-                                              item.id
-                                            )
-                                          }
-                                        />
-                                        <input
-                                          className="flex-1 text-xs border-b border-gray-200 bg-transparent"
-                                          value={item.text}
-                                          onChange={(e) => {
-                                            const newText = e.target.value;
-                                            setChecklists(
-                                              checklists.map((c) =>
-                                                c.id === cl.id
-                                                  ? {
-                                                      ...c,
-                                                      items: c.items.map((it) =>
-                                                        it.id === item.id
-                                                          ? {
-                                                              ...it,
-                                                              text: newText,
-                                                            }
-                                                          : it
-                                                      ),
-                                                    }
-                                                  : c
-                                              )
-                                            );
-                                          }}
-                                        />
-                                        <button
-                                          className="text-xs text-red-400"
-                                          onClick={() =>
-                                            handleDeleteChecklistItem(
-                                              cl.id,
-                                              item.id
-                                            )
-                                          }
-                                          type="button"
-                                        >
-                                          ×
-                                        </button>
-                                      </div>
-                                    )}
-                                  </Draggable>
-                                ))}
-                                {provided.placeholder}
-                                {/* Add item input */}
-                                <div className="flex items-center gap-2 mt-1">
-                                  <input
-                                    className="flex-1 text-xs border-b border-gray-200 bg-transparent"
-                                    placeholder="Add item..."
-                                    value={cl._newItem || ""}
-                                    onChange={(e) => {
-                                      const val = e.target.value;
-                                      setChecklists(
-                                        checklists.map((c) =>
-                                          c.id === cl.id
-                                            ? { ...c, _newItem: val }
-                                            : c
-                                        )
-                                      );
-                                    }}
-                                    onKeyDown={(e) => {
-                                      if (
-                                        e.key === "Enter" &&
-                                        cl._newItem &&
-                                        cl._newItem.trim()
-                                      ) {
-                                        handleAddChecklistItem(
-                                          cl.id,
-                                          cl._newItem.trim()
-                                        );
-                                        setChecklists(
-                                          checklists.map((c) =>
-                                            c.id === cl.id
-                                              ? { ...c, _newItem: "" }
-                                              : c
-                                          )
-                                        );
-                                      }
-                                    }}
-                                  />
-                                  <button
-                                    className="text-xs text-green-600"
-                                    type="button"
-                                    onClick={() => {
-                                      if (cl._newItem && cl._newItem.trim()) {
-                                        handleAddChecklistItem(
-                                          cl.id,
-                                          cl._newItem.trim()
-                                        );
-                                        setChecklists(
-                                          checklists.map((c) =>
-                                            c.id === cl.id
-                                              ? { ...c, _newItem: "" }
-                                              : c
-                                          )
-                                        );
-                                      }
-                                    }}
-                                  >
-                                    Add
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </Droppable>
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
+              <DayPicker
+                mode="single"
+                selected={dueDate.start ? new Date(dueDate.start) : undefined}
+                onSelect={(date) => handleDateChange("start", date)}
+              />
+              {dueDate.start && (
+                <div className="text-xs mt-1 text-gray-300">
+                  {format(new Date(dueDate.start), "MMM d, yyyy")}
                 </div>
               )}
-            </Droppable>
-          </DragDropContext>
-        </div>
-        <div className="flex justify-end gap-2 mt-6">
-          <button
-            className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300"
-            onClick={onClose}
-            type="button"
-          >
-            Cancel
-          </button>
-          <button
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            onClick={handleSave}
-            type="button"
-          >
-            Save
-          </button>
+            </div>
+            <div>
+              <div className="text-xs font-semibold mb-1 text-white">
+                End Date
+              </div>
+              <DayPicker
+                mode="single"
+                selected={dueDate.end ? new Date(dueDate.end) : undefined}
+                onSelect={(date) => handleDateChange("end", date)}
+              />
+              {dueDate.end && (
+                <div className="text-xs mt-1 text-gray-300">
+                  {format(new Date(dueDate.end), "MMM d, yyyy")}
+                </div>
+              )}
+            </div>
+          </div>
+          {/* Checklists */}
+          <div className="mb-4">
+            <div className="flex gap-2 mb-2">
+              <input
+                type="text"
+                className="border border-gray-700 rounded px-2 py-1 text-xs bg-gray-900 text-white placeholder:text-gray-400"
+                value={newChecklistTitle}
+                onChange={(e) => setNewChecklistTitle(e.target.value)}
+                placeholder="Checklist title"
+              />
+              <button
+                className="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700"
+                onClick={handleAddChecklist}
+                type="button"
+              >
+                Add Checklist
+              </button>
+            </div>
+            <DragDropContext onDragEnd={onDragEnd}>
+              <Droppable droppableId="checklists" type="checklist">
+                {(provided) => (
+                  <div ref={provided.innerRef} {...provided.droppableProps}>
+                    {checklists.map((cl, clIdx) => (
+                      <Draggable key={cl.id} draggableId={cl.id} index={clIdx}>
+                        {(provided) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            className="bg-gray-800 rounded p-2 mb-2 border border-gray-700"
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <span
+                                {...provided.dragHandleProps}
+                                className="cursor-move text-gray-400"
+                              >
+                                ☰
+                              </span>
+                              <input
+                                className="font-semibold text-xs border-b border-gray-700 bg-transparent flex-1 text-white placeholder:text-gray-400"
+                                value={cl.title}
+                                onChange={(e) =>
+                                  handleChecklistTitleChange(
+                                    cl.id,
+                                    e.target.value
+                                  )
+                                }
+                              />
+                              <button
+                                className="text-xs text-red-400 ml-2 hover:text-red-300"
+                                onClick={() => handleDeleteChecklist(cl.id)}
+                                type="button"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                            {/* Checklist items */}
+                            <Droppable droppableId={cl.id} type={`${cl.id}:item`}>
+                              {(provided) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.droppableProps}
+                                >
+                                  {cl.items.map((item, idx) => (
+                                    <Draggable
+                                      key={item.id}
+                                      draggableId={item.id}
+                                      index={idx}
+                                    >
+                                      {(provided) => (
+                                        <div
+                                          ref={provided.innerRef}
+                                          {...provided.draggableProps}
+                                          className="flex items-center gap-2 mb-1"
+                                        >
+                                          <span
+                                            {...provided.dragHandleProps}
+                                            className="cursor-move text-gray-400"
+                                          >
+                                            ⋮
+                                          </span>
+                                          <input
+                                            type="checkbox"
+                                            checked={item.checked}
+                                            onChange={() =>
+                                              handleToggleChecklistItem(
+                                                cl.id,
+                                                item.id
+                                              )
+                                            }
+                                          />
+                                          <input
+                                            className="flex-1 text-xs border-b border-gray-700 bg-transparent text-white placeholder:text-gray-400"
+                                            value={item.text}
+                                            onChange={(e) => {
+                                              const newText = e.target.value;
+                                              setChecklists(
+                                                checklists.map((c) =>
+                                                  c.id === cl.id
+                                                    ? {
+                                                        ...c,
+                                                        items: c.items.map((it) =>
+                                                          it.id === item.id
+                                                            ? {
+                                                                ...it,
+                                                                text: newText,
+                                                              }
+                                                            : it
+                                                        ),
+                                                      }
+                                                    : c
+                                                )
+                                              );
+                                            }}
+                                          />
+                                          <button
+                                            className="text-xs text-red-400 hover:text-red-300"
+                                            onClick={() =>
+                                              handleDeleteChecklistItem(
+                                                cl.id,
+                                                item.id
+                                              )
+                                            }
+                                            type="button"
+                                          >
+                                            ×
+                                          </button>
+                                        </div>
+                                      )}
+                                    </Draggable>
+                                  ))}
+                                  {provided.placeholder}
+                                  {/* Add item input */}
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <input
+                                      className="flex-1 text-xs border-b border-gray-700 bg-transparent text-white placeholder:text-gray-400"
+                                      placeholder="Add item..."
+                                      value={cl._newItem || ""}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        setChecklists(
+                                          checklists.map((c) =>
+                                            c.id === cl.id
+                                              ? { ...c, _newItem: val }
+                                              : c
+                                          )
+                                        );
+                                      }}
+                                      onKeyDown={(e) => {
+                                        if (
+                                          e.key === "Enter" &&
+                                          cl._newItem &&
+                                          cl._newItem.trim()
+                                        ) {
+                                          handleAddChecklistItem(
+                                            cl.id,
+                                            cl._newItem.trim()
+                                          );
+                                          setChecklists(
+                                            checklists.map((c) =>
+                                              c.id === cl.id
+                                                ? { ...c, _newItem: "" }
+                                                : c
+                                            )
+                                          );
+                                        }
+                                      }}
+                                    />
+                                    <button
+                                      className="text-xs text-green-400 hover:text-green-300"
+                                      type="button"
+                                      onClick={() => {
+                                        if (cl._newItem && cl._newItem.trim()) {
+                                          handleAddChecklistItem(
+                                            cl.id,
+                                            cl._newItem.trim()
+                                          );
+                                          setChecklists(
+                                            checklists.map((c) =>
+                                              c.id === cl.id
+                                                ? { ...c, _newItem: "" }
+                                                : c
+                                            )
+                                          );
+                                        }
+                                      }}
+                                    >
+                                      Add
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </Droppable>
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          </div>
+          <div className="flex justify-end gap-2 mt-6">
+            <button
+              className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600"
+              onClick={onClose}
+              type="button"
+            >
+              Cancel
+            </button>
+            <button
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              onClick={handleSave}
+              type="button"
+            >
+              Save
+            </button>
+          </div>
         </div>
       </div>
     </div>
