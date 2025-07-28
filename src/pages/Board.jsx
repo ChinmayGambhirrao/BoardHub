@@ -486,12 +486,12 @@ export default function Board() {
                           ref={provided.innerRef}
                           {...provided.draggableProps}
                           {...provided.dragHandleProps}
-                          className="bg-black/60 rounded-lg p-3 md:p-4 w-72 md:w-80 min-w-[18rem] md:min-w-[20rem] flex-shrink-0 max-h-[calc(100vh-100px)] flex flex-col"
+                          className="bg-card rounded-lg p-3 md:p-4 w-72 md:w-80 min-w-[18rem] md:min-w-[20rem] flex-shrink-0 max-h-[calc(100vh-100px)] flex flex-col border border-border transition-colors duration-300"
                         >
                           <div className="flex justify-between items-center mb-3 md:mb-4">
                             {editingListId === list._id ? (
                               <input
-                                className="text-base md:text-lg font-semibold bg-gray-900 text-white rounded px-2 py-1 w-40"
+                                className="text-base md:text-lg font-semibold bg-muted text-foreground rounded px-2 py-1 w-40 border border-border transition-colors duration-200"
                                 value={editingListTitle}
                                 autoFocus
                                 onChange={(e) =>
@@ -528,7 +528,7 @@ export default function Board() {
                               />
                             ) : (
                               <h2
-                                className="text-base md:text-lg text-white font-semibold cursor-pointer truncate pr-2"
+                                className="text-base md:text-lg text-foreground font-semibold cursor-pointer truncate pr-2 transition-colors duration-200"
                                 onClick={() => {
                                   setEditingListId(list._id);
                                   setEditingListTitle(list.title);
@@ -538,10 +538,10 @@ export default function Board() {
                               </h2>
                             )}
                             <div className="relative group">
-                              <MoreHorizontal className="text-white/60 cursor-pointer w-5 h-5" />
-                              <div className="absolute right-0 mt-2 w-40 bg-gray-800 rounded shadow-lg z-10 hidden group-hover:block">
+                              <MoreHorizontal className="text-muted-foreground cursor-pointer w-5 h-5 transition-colors duration-200" />
+                              <div className="absolute right-0 mt-2 w-40 bg-popover rounded shadow-lg z-10 hidden group-hover:block border border-border transition-colors duration-300">
                                 <button
-                                  className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-gray-700"
+                                  className="flex items-center w-full px-4 py-2 text-sm text-popover-foreground hover:bg-accent transition-colors duration-200"
                                   onClick={() => {
                                     setEditingListId(list._id);
                                     setEditingListTitle(list.title);

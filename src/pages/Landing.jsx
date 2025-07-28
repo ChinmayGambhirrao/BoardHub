@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { 
-  LayoutPanelLeft, 
-  RefreshCw, 
-  Copy, 
+import React, { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
+import {
+  LayoutPanelLeft,
+  RefreshCw,
+  Copy,
   Play,
   Twitter,
   Github,
@@ -11,8 +11,9 @@ import {
   Check,
   Star,
   Users,
-  Zap
-} from 'lucide-react';
+  Zap,
+} from "lucide-react";
+import ThemeToggle from "../components/ThemeToggle";
 
 const Landing = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -22,7 +23,7 @@ const Landing = () => {
 
   useEffect(() => {
     setIsVisible(true);
-    
+
     const handleScroll = () => {
       setScrollY(window.scrollY);
     };
@@ -30,49 +31,51 @@ const Landing = () => {
     // Intersection Observer for scroll-triggered animations
     const observerOptions = {
       threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px'
+      rootMargin: "0px 0px -50px 0px",
     };
 
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          const sectionId = entry.target.getAttribute('data-section');
+          const sectionId = entry.target.getAttribute("data-section");
           if (sectionId) {
-            setAnimatedSections(prev => new Set([...prev, sectionId]));
+            setAnimatedSections((prev) => new Set([...prev, sectionId]));
           }
         }
       });
     }, observerOptions);
 
     // Observe all sections
-    Object.values(sectionRefs.current).forEach(ref => {
+    Object.values(sectionRefs.current).forEach((ref) => {
       if (ref) observer.observe(ref);
     });
 
-    window.addEventListener('scroll', handleScroll);
-    
+    window.addEventListener("scroll", handleScroll);
+
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener("scroll", handleScroll);
       observer.disconnect();
     };
   }, []);
 
   const fadeInUp = {
     opacity: isVisible ? 1 : 0,
-    transform: isVisible ? 'translateY(0)' : 'translateY(30px)',
-    transition: 'all 0.6s ease-out'
+    transform: isVisible ? "translateY(0)" : "translateY(30px)",
+    transition: "all 0.6s ease-out",
   };
 
   const staggerDelay = (index) => ({
     opacity: isVisible ? 1 : 0,
-    transform: isVisible ? 'translateY(0)' : 'translateY(30px)',
-    transition: `all 0.6s ease-out ${index * 0.1}s`
+    transform: isVisible ? "translateY(0)" : "translateY(30px)",
+    transition: `all 0.6s ease-out ${index * 0.1}s`,
   });
 
   const sectionAnimation = (sectionId) => ({
     opacity: animatedSections.has(sectionId) ? 1 : 0,
-    transform: animatedSections.has(sectionId) ? 'translateY(0)' : 'translateY(50px)',
-    transition: 'all 0.8s ease-out'
+    transform: animatedSections.has(sectionId)
+      ? "translateY(0)"
+      : "translateY(50px)",
+    transition: "all 0.8s ease-out",
   });
 
   const addSectionRef = (id, ref) => {
@@ -94,9 +97,13 @@ const Landing = () => {
       </div>
 
       {/* Navbar */}
-      <nav className={`fixed top-0 w-full transition-all duration-300 z-50 ${
-        scrollY > 50 ? 'bg-background/95 backdrop-blur-md border-b border-border shadow-lg' : 'bg-transparent'
-      }`}>
+      <nav
+        className={`fixed top-0 w-full transition-all duration-300 z-50 ${
+          scrollY > 50
+            ? "bg-background/95 backdrop-blur-md border-b border-border shadow-lg"
+            : "bg-transparent"
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
@@ -111,10 +118,10 @@ const Landing = () => {
 
             {/* Center Links */}
             <div className="hidden md:flex items-center space-x-8">
-              {['Features', 'Templates', 'Pricing'].map((link, index) => (
-                <a 
+              {["Features", "Templates", "Pricing"].map((link, index) => (
+                <a
                   key={link}
-                  href={`#${link.toLowerCase()}`} 
+                  href={`#${link.toLowerCase()}`}
                   className="text-foreground hover:text-primary transition-all duration-200 relative group"
                   style={staggerDelay(index)}
                 >
@@ -126,13 +133,14 @@ const Landing = () => {
 
             {/* Right Side */}
             <div className="flex items-center space-x-4">
-              <Link 
-                to="/login" 
+              <ThemeToggle />
+              <Link
+                to="/login"
                 className="text-foreground hover:text-primary transition-all duration-200 hover:scale-105 hover-lift"
               >
                 Log In
               </Link>
-              <Link 
+              <Link
                 to="/register"
                 className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md font-medium transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-primary/25 animate-glow"
               >
@@ -151,12 +159,16 @@ const Landing = () => {
               Task management made simple
             </h1>
             <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
-              Drag, drop, and collaborate with BoardHub's intuitive kanban boards
+              Drag, drop, and collaborate with BoardHub's intuitive kanban
+              boards
             </p>
           </div>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16" style={staggerDelay(1)}>
-            <Link 
+
+          <div
+            className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16"
+            style={staggerDelay(1)}
+          >
+            <Link
               to="/register"
               className="group bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-md font-medium text-lg transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-primary/25 flex items-center space-x-2 hover-lift"
             >
@@ -170,7 +182,7 @@ const Landing = () => {
               <span>Watch Demo</span>
             </button>
           </div>
-          
+
           {/* Hero Visual */}
           <div className="mt-16 max-w-4xl mx-auto" style={staggerDelay(2)}>
             <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-8 border border-border/50 shadow-2xl hover:shadow-primary/10 transition-all duration-500 hover:scale-[1.02] hover-lift">
@@ -178,8 +190,12 @@ const Landing = () => {
                 <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent"></div>
                 <div className="text-center relative z-10">
                   <div className="text-6xl mb-4 animate-bounce">📋</div>
-                  <p className="text-muted-foreground font-medium">BoardHub App Interface</p>
-                  <p className="text-sm text-muted-foreground mt-2">Your kanban boards will appear here</p>
+                  <p className="text-muted-foreground font-medium">
+                    BoardHub App Interface
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Your kanban boards will appear here
+                  </p>
                 </div>
                 {/* Floating elements */}
                 <div className="absolute top-4 left-4 w-3 h-3 bg-primary/30 rounded-full animate-ping"></div>
@@ -192,50 +208,60 @@ const Landing = () => {
       </section>
 
       {/* Features Section */}
-      <section 
-        id="features" 
+      <section
+        id="features"
         className="py-16 px-4 sm:px-6 lg:px-8 bg-card/30 backdrop-blur-sm relative"
-        ref={(ref) => addSectionRef('features', ref)}
+        ref={(ref) => addSectionRef("features", ref)}
         data-section="features"
       >
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16" style={sectionAnimation('features')}>
-            <h2 className="text-3xl font-bold mb-4">Everything you need to stay organized</h2>
+          <div
+            className="text-center mb-16"
+            style={sectionAnimation("features")}
+          >
+            <h2 className="text-3xl font-bold mb-4">
+              Everything you need to stay organized
+            </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Powerful features that help teams collaborate and get work done efficiently
+              Powerful features that help teams collaborate and get work done
+              efficiently
             </p>
           </div>
-          
+
           <div className="grid md:grid-cols-3 gap-8">
             {[
               {
                 icon: LayoutPanelLeft,
                 title: "Boards & Cards",
                 description: "Organize tasks with drag-and-drop cards",
-                color: "from-blue-500 to-blue-600"
+                color: "from-blue-500 to-blue-600",
               },
               {
                 icon: RefreshCw,
                 title: "Real-Time Sync",
                 description: "See updates instantly with teammates",
-                color: "from-green-500 to-green-600"
+                color: "from-green-500 to-green-600",
               },
               {
                 icon: Copy,
                 title: "Templates",
                 description: "Start fast with project templates",
-                color: "from-purple-500 to-purple-600"
-              }
+                color: "from-purple-500 to-purple-600",
+              },
             ].map((feature, index) => (
-              <div 
+              <div
                 key={feature.title}
                 className="group text-center p-6 rounded-xl bg-card/50 backdrop-blur-sm border border-border/50 hover:border-primary/30 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/10 hover-lift stagger-item"
                 style={staggerDelay(index)}
               >
-                <div className={`bg-gradient-to-br ${feature.color} w-16 h-16 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg animate-rotate-in`}>
+                <div
+                  className={`bg-gradient-to-br ${feature.color} w-16 h-16 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg animate-rotate-in`}
+                >
                   <feature.icon className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors duration-200">{feature.title}</h3>
+                <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors duration-200">
+                  {feature.title}
+                </h3>
                 <p className="text-muted-foreground group-hover:text-foreground transition-colors duration-200">
                   {feature.description}
                 </p>
@@ -246,38 +272,66 @@ const Landing = () => {
       </section>
 
       {/* Templates Showcase */}
-      <section 
-        id="templates" 
+      <section
+        id="templates"
         className="py-16 px-4 sm:px-6 lg:px-8 relative"
-        ref={(ref) => addSectionRef('templates', ref)}
+        ref={(ref) => addSectionRef("templates", ref)}
         data-section="templates"
       >
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16" style={sectionAnimation('templates')}>
-            <h2 className="text-3xl font-bold mb-4">Start in seconds with templates</h2>
+          <div
+            className="text-center mb-16"
+            style={sectionAnimation("templates")}
+          >
+            <h2 className="text-3xl font-bold mb-4">
+              Start in seconds with templates
+            </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Choose from our collection of pre-built templates to get started quickly
+              Choose from our collection of pre-built templates to get started
+              quickly
             </p>
           </div>
-          
+
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { name: 'Project Management', color: 'from-blue-500 to-blue-600', icon: '📊' },
-              { name: 'Personal Tasks', color: 'from-green-500 to-green-600', icon: '✅' },
-              { name: 'Sprint Planning', color: 'from-purple-500 to-purple-600', icon: '🏃' },
-              { name: 'Student Planner', color: 'from-orange-500 to-orange-600', icon: '📚' }
+              {
+                name: "Project Management",
+                color: "from-blue-500 to-blue-600",
+                icon: "📊",
+              },
+              {
+                name: "Personal Tasks",
+                color: "from-green-500 to-green-600",
+                icon: "✅",
+              },
+              {
+                name: "Sprint Planning",
+                color: "from-purple-500 to-purple-600",
+                icon: "🏃",
+              },
+              {
+                name: "Student Planner",
+                color: "from-orange-500 to-orange-600",
+                icon: "📚",
+              },
             ].map((template, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className="group bg-card/50 backdrop-blur-sm rounded-xl border border-border/50 overflow-hidden hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 hover:scale-105 hover-lift stagger-item"
                 style={staggerDelay(index)}
               >
-                <div className={`bg-gradient-to-br ${template.color} h-32 flex items-center justify-center relative overflow-hidden`}>
-                  <div className="text-white text-4xl animate-scale-in">{template.icon}</div>
+                <div
+                  className={`bg-gradient-to-br ${template.color} h-32 flex items-center justify-center relative overflow-hidden`}
+                >
+                  <div className="text-white text-4xl animate-scale-in">
+                    {template.icon}
+                  </div>
                   <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300"></div>
                 </div>
                 <div className="p-4">
-                  <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors duration-200">{template.name}</h3>
+                  <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors duration-200">
+                    {template.name}
+                  </h3>
                   <button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2 rounded-md font-medium transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-primary/25 flex items-center justify-center space-x-2 group hover-glow">
                     <span>Use Template</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
@@ -290,28 +344,49 @@ const Landing = () => {
       </section>
 
       {/* Stats Section */}
-      <section 
+      <section
         className="py-16 px-4 sm:px-6 lg:px-8 bg-card/30 backdrop-blur-sm"
-        ref={(ref) => addSectionRef('stats', ref)}
+        ref={(ref) => addSectionRef("stats", ref)}
         data-section="stats"
       >
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             {[
-              { icon: Users, number: "10K+", label: "Active Users", color: "text-blue-400" },
-              { icon: Star, number: "4.9", label: "User Rating", color: "text-yellow-400" },
-              { icon: Zap, number: "99.9%", label: "Uptime", color: "text-green-400" }
+              {
+                icon: Users,
+                number: "10K+",
+                label: "Active Users",
+                color: "text-blue-400",
+              },
+              {
+                icon: Star,
+                number: "4.9",
+                label: "User Rating",
+                color: "text-yellow-400",
+              },
+              {
+                icon: Zap,
+                number: "99.9%",
+                label: "Uptime",
+                color: "text-green-400",
+              },
             ].map((stat, index) => (
-              <div 
+              <div
                 key={stat.label}
                 className="group p-6 rounded-xl bg-card/50 backdrop-blur-sm border border-border/50 hover:border-primary/30 transition-all duration-300 hover:scale-105 hover-lift stagger-item"
                 style={staggerDelay(index)}
               >
-                <div className={`${stat.color} w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 animate-float`}>
+                <div
+                  className={`${stat.color} w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 animate-float`}
+                >
                   <stat.icon className="w-6 h-6" />
                 </div>
-                <div className="text-3xl font-bold mb-2 group-hover:text-primary transition-colors duration-200">{stat.number}</div>
-                <div className="text-muted-foreground group-hover:text-foreground transition-colors duration-200">{stat.label}</div>
+                <div className="text-3xl font-bold mb-2 group-hover:text-primary transition-colors duration-200">
+                  {stat.number}
+                </div>
+                <div className="text-muted-foreground group-hover:text-foreground transition-colors duration-200">
+                  {stat.label}
+                </div>
               </div>
             ))}
           </div>
@@ -319,13 +394,18 @@ const Landing = () => {
       </section>
 
       {/* Testimonials */}
-      <section 
+      <section
         className="py-16 px-4 sm:px-6 lg:px-8 relative"
-        ref={(ref) => addSectionRef('testimonials', ref)}
+        ref={(ref) => addSectionRef("testimonials", ref)}
         data-section="testimonials"
       >
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-12" style={sectionAnimation('testimonials')}>What our users say</h2>
+          <h2
+            className="text-3xl font-bold mb-12"
+            style={sectionAnimation("testimonials")}
+          >
+            What our users say
+          </h2>
           <div className="grid md:grid-cols-2 gap-8">
             {[
               {
@@ -333,17 +413,17 @@ const Landing = () => {
                 name: "Alex T.",
                 role: "Freelancer",
                 quote: "BoardHub replaced our messy spreadsheets!",
-                rating: 5
+                rating: 5,
               },
               {
                 initials: "JL",
                 name: "Jamie L.",
                 role: "Startup Founder",
                 quote: "My team's productivity doubled.",
-                rating: 5
-              }
+                rating: 5,
+              },
             ].map((testimonial, index) => (
-              <div 
+              <div
                 key={testimonial.name}
                 className="group bg-card/50 backdrop-blur-sm p-6 rounded-xl border border-border/50 hover:border-primary/30 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/10 hover-lift stagger-item"
                 style={staggerDelay(index)}
@@ -353,13 +433,21 @@ const Landing = () => {
                     {testimonial.initials}
                   </div>
                   <div>
-                    <div className="font-semibold group-hover:text-primary transition-colors duration-200">{testimonial.name}</div>
-                    <div className="text-sm text-muted-foreground group-hover:text-foreground transition-colors duration-200">{testimonial.role}</div>
+                    <div className="font-semibold group-hover:text-primary transition-colors duration-200">
+                      {testimonial.name}
+                    </div>
+                    <div className="text-sm text-muted-foreground group-hover:text-foreground transition-colors duration-200">
+                      {testimonial.role}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center mb-3">
                   {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400 animate-scale-in" style={{ animationDelay: `${i * 0.1}s` }} />
+                    <Star
+                      key={i}
+                      className="w-4 h-4 fill-yellow-400 text-yellow-400 animate-scale-in"
+                      style={{ animationDelay: `${i * 0.1}s` }}
+                    />
                   ))}
                 </div>
                 <p className="text-muted-foreground group-hover:text-foreground transition-colors duration-200 italic">
@@ -372,16 +460,24 @@ const Landing = () => {
       </section>
 
       {/* Final CTA */}
-      <section 
+      <section
         className="py-16 px-4 sm:px-6 lg:px-8 relative"
-        ref={(ref) => addSectionRef('cta', ref)}
+        ref={(ref) => addSectionRef("cta", ref)}
         data-section="cta"
       >
         <div className="max-w-4xl mx-auto text-center">
           <div className="bg-gradient-to-br from-card/50 to-card/30 backdrop-blur-sm rounded-2xl p-8 border border-border/50 hover-lift">
-            <h2 className="text-3xl font-bold mb-6" style={sectionAnimation('cta')}>Ready to organize your work?</h2>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center" style={staggerDelay(1)}>
-              <Link 
+            <h2
+              className="text-3xl font-bold mb-6"
+              style={sectionAnimation("cta")}
+            >
+              Ready to organize your work?
+            </h2>
+            <div
+              className="flex flex-col sm:flex-row gap-4 justify-center"
+              style={staggerDelay(1)}
+            >
+              <Link
                 to="/register"
                 className="group bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-md font-medium transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-primary/25 flex items-center justify-center space-x-2 hover-lift attention-bounce"
               >
@@ -402,19 +498,19 @@ const Landing = () => {
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
-              <div className="text-2xl font-bold text-primary mb-4 hover:scale-110 transition-transform duration-200 cursor-pointer animate-float">BoardHub</div>
-              <p className="text-muted-foreground">
-                Organize work, your way
-              </p>
+              <div className="text-2xl font-bold text-primary mb-4 hover:scale-110 transition-transform duration-200 cursor-pointer animate-float">
+                BoardHub
+              </div>
+              <p className="text-muted-foreground">Organize work, your way</p>
             </div>
-            
+
             <div>
               <h3 className="font-semibold mb-4">Product</h3>
               <ul className="space-y-2">
-                {['Features', 'Templates', 'Pricing'].map((link) => (
+                {["Features", "Templates", "Pricing"].map((link) => (
                   <li key={link}>
-                    <a 
-                      href={`#${link.toLowerCase()}`} 
+                    <a
+                      href={`#${link.toLowerCase()}`}
                       className="text-muted-foreground hover:text-foreground transition-colors duration-200 hover:translate-x-1 inline-block"
                     >
                       {link}
@@ -423,14 +519,14 @@ const Landing = () => {
                 ))}
               </ul>
             </div>
-            
+
             <div>
               <h3 className="font-semibold mb-4">Legal</h3>
               <ul className="space-y-2">
-                {['Privacy', 'Terms'].map((link) => (
+                {["Privacy", "Terms"].map((link) => (
                   <li key={link}>
-                    <a 
-                      href="#" 
+                    <a
+                      href="#"
                       className="text-muted-foreground hover:text-foreground transition-colors duration-200 hover:translate-x-1 inline-block"
                     >
                       {link}
@@ -439,18 +535,18 @@ const Landing = () => {
                 ))}
               </ul>
             </div>
-            
+
             <div>
               <h3 className="font-semibold mb-4">Social</h3>
               <div className="flex space-x-4">
-                <a 
-                  href="#" 
+                <a
+                  href="#"
                   className="text-muted-foreground hover:text-foreground transition-all duration-200 hover:scale-110 hover:rotate-12"
                 >
                   <Twitter className="w-5 h-5" />
                 </a>
-                <a 
-                  href="#" 
+                <a
+                  href="#"
                   className="text-muted-foreground hover:text-foreground transition-all duration-200 hover:scale-110 hover:rotate-12"
                 >
                   <Github className="w-5 h-5" />
@@ -458,7 +554,7 @@ const Landing = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="border-t border-border mt-8 pt-8 text-center text-muted-foreground">
             © 2024 BoardHub. Built by Chinmay G.
           </div>

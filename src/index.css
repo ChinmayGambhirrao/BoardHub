@@ -34,6 +34,70 @@
  
     --radius: 0.25rem;
   }
+
+  .light {
+    --background: 0 0% 100%; /* White background */
+    --foreground: 0 0% 9%; /* Dark text */
+
+    --card: 0 0% 98%; /* Very light gray for cards */
+    --card-foreground: 0 0% 9%;
+ 
+    --popover: 0 0% 98%;
+    --popover-foreground: 0 0% 9%;
+ 
+    --primary: 207 100% 42%; /* Keep the same blue */
+    --primary-foreground: 0 0% 100%;
+ 
+    --secondary: 0 0% 96%; /* Light gray */
+    --secondary-foreground: 0 0% 9%;
+ 
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%; /* Medium gray for muted text */
+ 
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 9%;
+ 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 90%; /* Light border */
+    --input: 0 0% 96%;
+    --ring: 207 100% 42%;
+ 
+    --radius: 0.25rem;
+  }
+
+  .dark {
+    --background: 215 27% 14%; /* Dark background color to match Trello (#1D2125) */
+    --foreground: 0 0% 100%;
+
+    --card: 215 24% 18%; /* Slightly lighter dark color for cards (#282E33) */
+    --card-foreground: 0 0% 100%;
+ 
+    --popover: 215 24% 18%;
+    --popover-foreground: 0 0% 100%;
+ 
+    --primary: 207 100% 42%; /* Trello blue (#1976d2) */
+    --primary-foreground: 0 0% 100%;
+ 
+    --secondary: 214 9% 15%;
+    --secondary-foreground: 0 0% 100%;
+ 
+    --muted: 215 14% 25%;
+    --muted-foreground: 0 0% 70%;
+ 
+    --accent: 215 14% 25%;
+    --accent-foreground: 0 0% 100%;
+ 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 215 14% 25%;
+    --input: 215 14% 25%;
+    --ring: 207 100% 42%;
+ 
+    --radius: 0.25rem;
+  }
 }
  
 @layer base {
@@ -42,6 +106,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 }
 
@@ -54,8 +119,6 @@
 body {
   font-family: 'Roboto', sans-serif;
   font-size: 16px;
-  color: white;
-  background-color: #1D2125;
   overscroll-behavior: none; /* Prevent pull-to-refresh on mobile */
 }
 
@@ -140,6 +203,19 @@ header .dropdown-menu {
   ::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.3);
   }
+}
+
+/* Light theme scrollbar */
+.light ::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
 }
 
 /* Landing page animations */

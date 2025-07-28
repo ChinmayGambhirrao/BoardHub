@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { FcGoogle } from "react-icons/fc";
+import ThemeToggle from "../components/ThemeToggle";
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -37,14 +38,21 @@ export default function Register() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-[#1D2125]">
-      <div className="w-full max-w-md p-8 space-y-6 bg-[#282E33] rounded-lg shadow-lg">
-        <h1 className="text-3xl font-bold text-center text-white">Register</h1>
+    <div className="flex items-center justify-center min-h-screen bg-background transition-colors duration-300">
+      {/* Theme Toggle - Fixed position */}
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
+
+      <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-lg shadow-lg border border-border transition-colors duration-300">
+        <h1 className="text-3xl font-bold text-center text-foreground">
+          Register
+        </h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label
               htmlFor="name"
-              className="block text-sm font-medium text-gray-300"
+              className="block text-sm font-medium text-muted-foreground"
             >
               Name
             </label>
@@ -55,13 +63,13 @@ export default function Register() {
               value={formData.name}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 mt-1 text-white bg-[#22272B] border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 mt-1 text-foreground bg-muted border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary transition-colors duration-200"
             />
           </div>
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-300"
+              className="block text-sm font-medium text-muted-foreground"
             >
               Email
             </label>
@@ -72,13 +80,13 @@ export default function Register() {
               value={formData.email}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 mt-1 text-white bg-[#22272B] border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 mt-1 text-foreground bg-muted border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary transition-colors duration-200"
             />
           </div>
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-gray-300"
+              className="block text-sm font-medium text-muted-foreground"
             >
               Password
             </label>
@@ -89,13 +97,13 @@ export default function Register() {
               value={formData.password}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 mt-1 text-white bg-[#22272B] border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 mt-1 text-foreground bg-muted border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary transition-colors duration-200"
             />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-4 py-2 text-primary-foreground bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
           >
             {loading ? "Creating account..." : "Register"}
           </button>

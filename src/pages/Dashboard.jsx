@@ -109,10 +109,10 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="bg-[#1D2125] min-h-screen">
+    <div className="bg-background min-h-screen transition-colors duration-300">
       {/* Hamburger for mobile */}
       <button
-        className="sm:hidden p-3 text-white focus:outline-none"
+        className="sm:hidden p-3 text-foreground focus:outline-none transition-colors duration-200"
         onClick={() => setDrawerOpen(true)}
         aria-label="Open sidebar menu"
       >
@@ -120,10 +120,10 @@ const Dashboard = () => {
       </button>
       {/* Sidebar Drawer for mobile */}
       {drawerOpen && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex">
-          <div className="bg-[#22272b] w-64 h-full p-4 overflow-y-auto relative">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex">
+          <div className="bg-card w-64 h-full p-4 overflow-y-auto relative border-r border-border transition-colors duration-300">
             <button
-              className="absolute top-2 right-2 text-white/70 hover:text-white"
+              className="absolute top-2 right-2 text-muted-foreground hover:text-foreground transition-colors duration-200"
               onClick={() => setDrawerOpen(false)}
               aria-label="Close sidebar menu"
             >
@@ -132,7 +132,7 @@ const Dashboard = () => {
             <div className="flex flex-col space-y-1 mt-8">
               <Button
                 variant="ghost"
-                className="justify-start text-white hover:bg-white/10 h-8"
+                className="justify-start text-foreground hover:bg-accent h-8 transition-colors duration-200"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -145,7 +145,7 @@ const Dashboard = () => {
               </Button>
               <Button
                 variant="ghost"
-                className="justify-start text-white/70 hover:bg-white/10 h-8"
+                className="justify-start text-muted-foreground hover:bg-accent h-8 transition-colors duration-200"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -158,7 +158,7 @@ const Dashboard = () => {
               </Button>
               <Button
                 variant="ghost"
-                className="justify-start text-white/70 hover:bg-white/10 h-8"
+                className="justify-start text-muted-foreground hover:bg-accent h-8 transition-colors duration-200"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -171,39 +171,39 @@ const Dashboard = () => {
               </Button>
             </div>
             <div className="mt-8">
-              <h3 className="text-sm font-medium text-white/70 mb-2">
+              <h3 className="text-sm font-medium text-muted-foreground mb-2">
                 Workspaces
               </h3>
-              <div className="flex items-center py-1.5 px-2 bg-white/10 rounded mb-1">
+              <div className="flex items-center py-1.5 px-2 bg-accent rounded mb-1 transition-colors duration-200">
                 <div className="h-8 w-8 bg-teal-600 rounded flex items-center justify-center text-white mr-2">
                   T
                 </div>
-                <span className="text-white font-medium">
+                <span className="text-foreground font-medium">
                   BoardHub Workspace
                 </span>
               </div>
               <div className="flex flex-col pl-10 space-y-1">
                 <Button
                   variant="ghost"
-                  className="justify-start text-white/70 hover:bg-white/10 h-8"
+                  className="justify-start text-muted-foreground hover:bg-accent h-8 transition-colors duration-200"
                 >
                   Boards
                 </Button>
                 <Button
                   variant="ghost"
-                  className="justify-start text-white/70 hover:bg-white/10 h-8"
+                  className="justify-start text-muted-foreground hover:bg-accent h-8 transition-colors duration-200"
                 >
                   Members
                 </Button>
                 <Button
                   variant="ghost"
-                  className="justify-start text-white/70 hover:bg-white/10 h-8"
+                  className="justify-start text-muted-foreground hover:bg-accent h-8 transition-colors duration-200"
                 >
                   Settings
                 </Button>
                 <Button
                   variant="ghost"
-                  className="justify-start text-white/70 hover:bg-white/10 h-8"
+                  className="justify-start text-muted-foreground hover:bg-accent h-8 transition-colors duration-200"
                 >
                   Billing
                 </Button>
@@ -220,7 +220,7 @@ const Dashboard = () => {
             <div className="flex flex-col space-y-1">
               <Button
                 variant="ghost"
-                className="justify-start text-white hover:bg-white/10 h-8"
+                className="justify-start text-foreground hover:bg-accent h-8 transition-colors duration-200"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -233,7 +233,7 @@ const Dashboard = () => {
               </Button>
               <Button
                 variant="ghost"
-                className="justify-start text-white/70 hover:bg-white/10 h-8"
+                className="justify-start text-muted-foreground hover:bg-accent h-8 transition-colors duration-200"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -246,7 +246,7 @@ const Dashboard = () => {
               </Button>
               <Button
                 variant="ghost"
-                className="justify-start text-white/70 hover:bg-white/10 h-8"
+                className="justify-start text-muted-foreground hover:bg-accent h-8 transition-colors duration-200"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -260,14 +260,14 @@ const Dashboard = () => {
             </div>
 
             <div className="mt-8">
-              <h3 className="text-sm font-medium text-white/70 mb-2">
+              <h3 className="text-sm font-medium text-muted-foreground mb-2">
                 Workspaces
               </h3>
-              <div className="flex items-center py-1.5 px-2 bg-white/10 rounded mb-1">
+              <div className="flex items-center py-1.5 px-2 bg-accent rounded mb-1 transition-colors duration-200">
                 <div className="h-8 w-8 bg-teal-600 rounded flex items-center justify-center text-white mr-2">
                   T
                 </div>
-                <span className="text-white font-medium">
+                <span className="text-foreground font-medium">
                   BoardHub Workspace
                 </span>
               </div>
@@ -275,25 +275,25 @@ const Dashboard = () => {
               <div className="flex flex-col pl-10 space-y-1">
                 <Button
                   variant="ghost"
-                  className="justify-start text-white/70 hover:bg-white/10 h-8"
+                  className="justify-start text-muted-foreground hover:bg-accent h-8 transition-colors duration-200"
                 >
                   Boards
                 </Button>
                 <Button
                   variant="ghost"
-                  className="justify-start text-white/70 hover:bg-white/10 h-8"
+                  className="justify-start text-muted-foreground hover:bg-accent h-8 transition-colors duration-200"
                 >
                   Members
                 </Button>
                 <Button
                   variant="ghost"
-                  className="justify-start text-white/70 hover:bg-white/10 h-8"
+                  className="justify-start text-muted-foreground hover:bg-accent h-8 transition-colors duration-200"
                 >
                   Settings
                 </Button>
                 <Button
                   variant="ghost"
-                  className="justify-start text-white/70 hover:bg-white/10 h-8"
+                  className="justify-start text-muted-foreground hover:bg-accent h-8 transition-colors duration-200"
                 >
                   Billing
                 </Button>
@@ -303,30 +303,30 @@ const Dashboard = () => {
 
           <div className="flex-1">
             {/* Templates section */}
-            <div className="relative mb-10 bg-[#282E33] rounded-md p-4 z-10">
+            <div className="relative mb-10 bg-card rounded-md p-4 z-10 border border-border transition-colors duration-300">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center">
                   <svg
-                    className="h-6 w-6 mr-2 text-white"
+                    className="h-6 w-6 mr-2 text-foreground"
                     viewBox="0 0 24 24"
                     fill="currentColor"
                   >
                     <path d="M3 3a2 2 0 012-2h14a2 2 0 012 2v18a2 2 0 01-2 2H5a2 2 0 01-2-2V3zm16 0H5v18h14V3z" />
                     <path d="M7 7h10v2H7V7zm0 4h10v2H7v-2zm0 4h8v2H7v-2z" />
                   </svg>
-                  <h2 className="text-lg font-medium text-white">
+                  <h2 className="text-lg font-medium text-foreground">
                     Most popular templates
                   </h2>
                 </div>
               </div>
 
-              <p className="text-white/70 mb-6">
+              <p className="text-muted-foreground mb-6">
                 Get going faster with a template from the Trello community or
               </p>
 
               <div className="flex items-center mb-4">
                 <Select>
-                  <SelectTrigger className="w-64 border-none bg-white/10 text-white h-9">
+                  <SelectTrigger className="w-64 border-border bg-muted text-foreground h-9 transition-colors duration-200">
                     <SelectValue placeholder="choose a category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -349,12 +349,12 @@ const Dashboard = () => {
               >
                 {/* Create new board card */}
                 <div
-                  className="flex flex-col items-center justify-center h-32 rounded bg-white/10 hover:bg-white/20 cursor-pointer border-2 border-dashed border-white/20 transition"
+                  className="flex flex-col items-center justify-center h-32 rounded bg-muted hover:bg-accent cursor-pointer border-2 border-dashed border-border transition-colors duration-200"
                   onClick={() => setShowModal(true)}
                   ref={cardRef}
                 >
-                  <Plus className="w-8 h-8 text-white mb-2" />
-                  <span className="text-white font-semibold">
+                  <Plus className="w-8 h-8 text-foreground mb-2" />
+                  <span className="text-foreground font-semibold">
                     Create new board
                   </span>
                 </div>
@@ -366,7 +366,7 @@ const Dashboard = () => {
                   <div key={board._id} className="relative overflow-hidden">
                     <Link
                       to={`/board/${board._id}`}
-                      className="block h-32 rounded overflow-hidden bg-gray-700 hover:bg-gray-600 transition"
+                      className="block h-32 rounded overflow-hidden hover:opacity-90 transition-opacity duration-200"
                       style={{ background: board.background || "#0079bf" }}
                     >
                       <div className="flex items-end h-full p-4">
@@ -383,7 +383,7 @@ const Dashboard = () => {
                 <div className="flex justify-center mb-4">
                   <Button
                     variant="outline"
-                    className="text-blue-400 border-blue-400 hover:bg-blue-400 hover:text-white"
+                    className="text-primary border-primary hover:bg-primary hover:text-primary-foreground transition-colors duration-200"
                     onClick={() => setExpanded((prev) => !prev)}
                   >
                     {expanded ? "Show Less" : "View More"}
@@ -392,7 +392,10 @@ const Dashboard = () => {
               )}
 
               <div className="mt-4">
-                <a href="#" className="text-blue-400 hover:underline text-sm">
+                <a
+                  href="#"
+                  className="text-primary hover:underline text-sm transition-colors duration-200"
+                >
                   Browse the full template gallery
                 </a>
               </div>
@@ -400,9 +403,9 @@ const Dashboard = () => {
 
             {/* Recently viewed section */}
             <div className="mb-8 z-10">
-              <h2 className="flex items-center text-lg font-medium text-white mb-4">
+              <h2 className="flex items-center text-lg font-medium text-foreground mb-4">
                 <svg
-                  className="h-5 w-5 mr-2 text-white"
+                  className="h-5 w-5 mr-2 text-foreground"
                   viewBox="0 0 24 24"
                   fill="currentColor"
                 >
@@ -442,28 +445,30 @@ const Dashboard = () => {
         </div>
         {/* Modal for creating a board */}
         {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-[#22272b] rounded-lg p-8 w-full max-w-sm shadow-lg relative">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div className="bg-card rounded-lg p-8 w-full max-w-sm shadow-lg relative border border-border transition-colors duration-300">
               <button
-                className="absolute top-2 right-2 text-white/70 hover:text-white"
+                className="absolute top-2 right-2 text-muted-foreground hover:text-foreground transition-colors duration-200"
                 onClick={() => setShowModal(false)}
               >
                 <X className="w-5 h-5" />
               </button>
-              <h2 className="text-xl font-bold text-white mb-4">
+              <h2 className="text-xl font-bold text-foreground mb-4">
                 Create board
               </h2>
               <form onSubmit={handleCreateBoard}>
-                <label className="block text-white/80 mb-2">Board name</label>
+                <label className="block text-muted-foreground mb-2">
+                  Board name
+                </label>
                 <input
                   type="text"
                   value={newBoardName}
                   onChange={(e) => setNewBoardName(e.target.value)}
-                  className="w-full px-3 py-2 rounded bg-[#282E33] text-white mb-4 border border-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 rounded bg-muted text-foreground mb-4 border border-border focus:outline-none focus:ring-2 focus:ring-primary transition-colors duration-200"
                   placeholder="e.g. Project Launch"
                   required
                 />
-                <label className="block text-white/80 mb-2">
+                <label className="block text-muted-foreground mb-2">
                   Background color
                 </label>
                 <div className="flex gap-2 mb-4">
@@ -473,9 +478,9 @@ const Dashboard = () => {
                       key={color}
                       className={`w-8 h-8 rounded-full border-2 ${
                         newBoardColor === color
-                          ? "border-blue-500"
+                          ? "border-primary"
                           : "border-transparent"
-                      }`}
+                      } transition-colors duration-200`}
                       style={{ background: color }}
                       onClick={() => setNewBoardColor(color)}
                     />
@@ -484,7 +489,7 @@ const Dashboard = () => {
                 <button
                   type="submit"
                   disabled={creating}
-                  className="w-full py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
+                  className="w-full py-2 rounded bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors duration-200"
                 >
                   {creating ? "Creating..." : "Create board"}
                 </button>
