@@ -3,9 +3,12 @@ import { X } from "lucide-react";
 import { format } from "date-fns";
 import { DayPicker } from "react-day-picker";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { useSocket } from "../contexts/SocketContext";
 import "react-day-picker/dist/style.css"; // Import default calendar styles
 
 const CardModal = ({ card, onClose, onUpdate, onDelete }) => {
+  const { emitCardUpdated } = useSocket();
+
   // Local state for editing
   const [title, setTitle] = useState(card.title || "");
   const [description, setDescription] = useState(card.description || "");
@@ -117,14 +120,31 @@ const CardModal = ({ card, onClose, onUpdate, onDelete }) => {
 
   // Save handler
   const handleSave = () => {
-    onUpdate({
+    const updatedCard = {
       ...card,
       title,
       description,
       labels,
       dueDate,
       checklists,
+    };
+
+    onUpdate(updatedCard);
+
+    // Emit real-time event for card update
+    emitCardUpdated({
+      boardId: card.list?._id || card.boardId,
+      listId: card.list?._id || card.listId,
+      cardId: card._id,
+      updatedFields: {
+        title,
+        description,
+        labels,
+        dueDate,
+        checklists,
+      },
     });
+
     onClose();
   };
 
@@ -290,7 +310,10 @@ const CardModal = ({ card, onClose, onUpdate, onDelete }) => {
                               </button>
                             </div>
                             {/* Checklist items */}
-                            <Droppable droppableId={cl.id} type={`${cl.id}:item`}>
+                            <Droppable
+                              droppableId={cl.id}
+                              type={`${cl.id}:item`}
+                            >
                               {(provided) => (
                                 <div
                                   ref={provided.innerRef}
@@ -334,13 +357,14 @@ const CardModal = ({ card, onClose, onUpdate, onDelete }) => {
                                                   c.id === cl.id
                                                     ? {
                                                         ...c,
-                                                        items: c.items.map((it) =>
-                                                          it.id === item.id
-                                                            ? {
-                                                                ...it,
-                                                                text: newText,
-                                                              }
-                                                            : it
+                                                        items: c.items.map(
+                                                          (it) =>
+                                                            it.id === item.id
+                                                              ? {
+                                                                  ...it,
+                                                                  text: newText,
+                                                                }
+                                                              : it
                                                         ),
                                                       }
                                                     : c

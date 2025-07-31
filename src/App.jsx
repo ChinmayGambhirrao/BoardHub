@@ -8,6 +8,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AppRoutes from "./routes";
 import { AuthProvider } from "./contexts/AuthContext";
+import { SocketProvider } from "./contexts/SocketContext";
 import { useEffect } from "react";
 import "./index.css";
 
@@ -54,23 +55,25 @@ function App() {
         <LoadingProvider>
           <ToastProvider>
             <AuthProvider>
-              <ErrorBoundary>
-                <div className="min-h-screen bg-background text-foreground">
-                  <AppRoutes />
-                  <ToastContainer
-                    position="top-right"
-                    autoClose={3000}
-                    hideProgressBar={false}
-                    newestOnTop
-                    closeOnClick
-                    rtl={false}
-                    pauseOnFocusLoss
-                    draggable
-                    pauseOnHover
-                    theme="dark"
-                  />
-                </div>
-              </ErrorBoundary>
+              <SocketProvider>
+                <ErrorBoundary>
+                  <div className="min-h-screen bg-background text-foreground">
+                    <AppRoutes />
+                    <ToastContainer
+                      position="top-right"
+                      autoClose={3000}
+                      hideProgressBar={false}
+                      newestOnTop
+                      closeOnClick
+                      rtl={false}
+                      pauseOnFocusLoss
+                      draggable
+                      pauseOnHover
+                      theme="dark"
+                    />
+                  </div>
+                </ErrorBoundary>
+              </SocketProvider>
             </AuthProvider>
           </ToastProvider>
         </LoadingProvider>

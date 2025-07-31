@@ -13,9 +13,12 @@ import { useParams } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { boardAPI, listAPI, cardAPI } from "../api";
 import { useToast } from "../contexts/ToastContext";
+import { useSocket } from "../contexts/SocketContext";
 import { Dialog } from "../components/ui/dialog";
 import Card from "../components/Card";
 import CardModal from "../components/CardModal";
+import UserPresence from "../components/UserPresence";
+import NotificationToast from "../components/NotificationToast";
 
 const SAMPLE_LISTS = [
   {
@@ -61,6 +64,18 @@ export default function Board() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const { showSuccess, showError } = useToast();
+  const {
+    joinBoard,
+    leaveBoard,
+    emitCardCreated,
+    emitCardUpdated,
+    emitCardDeleted,
+    emitCardMoved,
+    emitListCreated,
+    emitListUpdated,
+    emitListDeleted,
+    emitBoardUpdated,
+  } = useSocket();
   const [showAddCard, setShowAddCard] = useState({});
   const [newCardTitle, setNewCardTitle] = useState("");
   const [selectedCard, setSelectedCard] = useState(null);
@@ -120,6 +135,9 @@ export default function Board() {
         };
         setBoard(processedBoard);
         showSuccess("Board loaded successfully");
+
+        // Join the board for real-time collaboration
+        joinBoard(id);
       } catch (err) {
         setError("Failed to load board data");
         showError("Failed to load board data");
@@ -128,7 +146,12 @@ export default function Board() {
       }
     };
     fetchBoard();
-  }, [id, showSuccess, showError]);
+
+    // Cleanup: leave board when component unmounts
+    return () => {
+      leaveBoard(id);
+    };
+  }, [id, showSuccess, showError, joinBoard, leaveBoard]);
 
   // Add a new list
   const handleAddList = async (title) => {
@@ -136,6 +159,12 @@ export default function Board() {
       const res = await listAPI.createList(id, { title });
       setBoard((prev) => ({ ...prev, lists: [...prev.lists, res.data] }));
       showSuccess("List added");
+
+      // Emit real-time event
+      emitListCreated({
+        boardId: id,
+        list: res.data,
+      });
     } catch (err) {
       showError("Failed to add list");
     }
@@ -152,6 +181,13 @@ export default function Board() {
         ),
       }));
       showSuccess("List updated");
+
+      // Emit real-time event
+      emitListUpdated({
+        boardId: id,
+        listId,
+        title: newTitle,
+      });
     } catch (err) {
       showError("Failed to update list");
     }
@@ -171,6 +207,13 @@ export default function Board() {
     try {
       await listAPI.deleteList(listId);
       showSuccess("List deleted");
+
+      // Emit real-time event
+      emitListDeleted({
+        boardId: id,
+        listId,
+        listTitle: list.title,
+      });
     } catch (err) {
       showError("Failed to delete list");
     }
@@ -224,6 +267,13 @@ export default function Board() {
         ),
       }));
       showSuccess("Card added");
+
+      // Emit real-time event
+      emitCardCreated({
+        boardId: id,
+        listId,
+        card: res.data,
+      });
     } catch (err) {
       showError("Failed to add card");
     }
@@ -247,6 +297,14 @@ export default function Board() {
         ),
       }));
       showSuccess("Card updated");
+
+      // Emit real-time event
+      emitCardUpdated({
+        boardId: id,
+        listId,
+        cardId,
+        updatedFields,
+      });
     } catch (err) {
       showError("Failed to update card");
     }
@@ -265,6 +323,13 @@ export default function Board() {
         ),
       }));
       showSuccess("Card deleted");
+
+      // Emit real-time event
+      emitCardDeleted({
+        boardId: id,
+        listId,
+        cardId,
+      });
     } catch (err) {
       showError("Failed to delete card");
     }
@@ -369,6 +434,16 @@ export default function Board() {
         destinationListId: destination.droppableId,
         position: destination.index,
       });
+
+      // Emit real-time event
+      emitCardMoved({
+        boardId: id,
+        cardId: draggableId,
+        sourceListId: source.droppableId,
+        destinationListId: destination.droppableId,
+        sourceIndex: source.index,
+        destinationIndex: destination.index,
+      });
     } catch (err) {
       console.error("Failed to move card:", err);
       showError("Failed to move card");
@@ -443,15 +518,8 @@ export default function Board() {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          {/* Fake member avatars */}
-          {["DO", "JH", "ZS", "CC"].map((initials, i) => (
-            <div
-              key={i}
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs md:text-sm font-bold border-2 border-white -ml-2 first:ml-0"
-            >
-              {initials}
-            </div>
-          ))}
+          {/* Real-time user presence */}
+          <UserPresence />
         </div>
       </div>
       {/* Lists as columns - Made responsive with horizontal scroll */}
@@ -892,6 +960,9 @@ export default function Board() {
           </div>
         </div>
       )}
+
+      {/* Real-time notifications */}
+      <NotificationToast />
     </div>
   );
 }
