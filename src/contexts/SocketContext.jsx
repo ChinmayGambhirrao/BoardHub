@@ -6,6 +6,7 @@ const SocketContext = createContext();
 
 export const useSocket = () => {
   const context = useContext(SocketContext);
+  console.log("useSocket - context:", context);
   if (!context) {
     throw new Error("useSocket must be used within a SocketProvider");
   }
@@ -19,9 +20,22 @@ export const SocketProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const { user, token } = useAuth();
 
+  // Debug logging
+  console.log("SocketProvider - user:", user);
+  console.log("SocketProvider - token:", token ? "exists" : "missing");
+  console.log("SocketProvider - socket:", socket);
+  console.log("SocketProvider - isConnected:", isConnected);
+
   // Initialize socket connection
   useEffect(() => {
+    console.log("SocketProvider useEffect - user:", user);
+    console.log(
+      "SocketProvider useEffect - token:",
+      token ? "exists" : "missing"
+    );
+
     if (!user || !token) {
+      console.log("SocketProvider - No user or token, disconnecting socket");
       if (socket) {
         socket.disconnect();
         setSocket(null);
@@ -30,14 +44,22 @@ export const SocketProvider = ({ children }) => {
       return;
     }
 
+    console.log("SocketProvider - Creating new socket connection");
     const newSocket = io(
       import.meta.env.VITE_API_URL || "http://localhost:5001",
       {
         auth: {
           token: token,
         },
+        transports: ["websocket", "polling"],
+        timeout: 20000,
+        forceNew: true,
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
       }
     );
+    console.log("SocketProvider - Socket created:", newSocket);
 
     newSocket.on("connect", () => {
       console.log("Socket connected:", newSocket.id);
@@ -53,6 +75,10 @@ export const SocketProvider = ({ children }) => {
     newSocket.on("connect_error", (error) => {
       console.error("Socket connection error:", error);
       setIsConnected(false);
+    });
+
+    newSocket.on("error", (error) => {
+      console.error("Socket error:", error);
     });
 
     // User presence events
@@ -113,9 +139,11 @@ export const SocketProvider = ({ children }) => {
       addNotification(`${data.updatedBy.name} updated the board`, "info");
     });
 
+    console.log("SocketProvider - Setting socket state:", newSocket);
     setSocket(newSocket);
 
     return () => {
+      console.log("SocketProvider - Cleaning up socket connection");
       newSocket.disconnect();
     };
   }, [user, token]);
@@ -138,13 +166,19 @@ export const SocketProvider = ({ children }) => {
 
   const joinBoard = (boardId) => {
     if (socket && isConnected) {
+      console.log("Joining board:", boardId);
       socket.emit("join-board", boardId);
+    } else {
+      console.log("Cannot join board - socket not connected");
     }
   };
 
   const leaveBoard = (boardId) => {
     if (socket && isConnected) {
+      console.log("Leaving board:", boardId);
       socket.emit("leave-board", boardId);
+    } else {
+      console.log("Cannot leave board - socket not connected");
     }
   };
 
@@ -212,6 +246,8 @@ export const SocketProvider = ({ children }) => {
     emitListDeleted,
     emitBoardUpdated,
   };
+
+  console.log("SocketProvider - Providing value:", value);
 
   return (
     <SocketContext.Provider value={value}>{children}</SocketContext.Provider>

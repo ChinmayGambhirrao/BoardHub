@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import {
   Plus,
@@ -19,6 +19,7 @@ import Card from "../components/Card";
 import CardModal from "../components/CardModal";
 import UserPresence from "../components/UserPresence";
 import NotificationToast from "../components/NotificationToast";
+import BoardSharing from "../components/BoardSharing";
 
 const SAMPLE_LISTS = [
   {
@@ -45,7 +46,7 @@ const SAMPLE_LISTS = [
   },
   {
     title: "🎉 Done",
-    cards: [{ title: "Signed up for Trello" }],
+    cards: [{ title: "Signed up for BoardHub" }],
   },
 ];
 
@@ -61,10 +62,23 @@ function debounce(fn, delay) {
 export default function Board() {
   const { id } = useParams();
   const [board, setBoard] = useState(null);
+
+  // Validate board ID
+  useEffect(() => {
+    if (!id) {
+      console.error("No board ID provided");
+      setError("Invalid board URL");
+      return;
+    }
+
+    console.log("Board component mounted with ID:", id);
+  }, [id]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const { showSuccess, showError } = useToast();
   const {
+    socket,
+    isConnected,
     joinBoard,
     leaveBoard,
     emitCardCreated,
@@ -76,6 +90,11 @@ export default function Board() {
     emitListDeleted,
     emitBoardUpdated,
   } = useSocket();
+
+  // Debug logging
+  console.log("Board component - socket:", socket);
+  console.log("Board component - isConnected:", isConnected);
+  console.log("Board component - board ID:", id);
   const [showAddCard, setShowAddCard] = useState({});
   const [newCardTitle, setNewCardTitle] = useState("");
   const [selectedCard, setSelectedCard] = useState(null);
@@ -91,6 +110,9 @@ export default function Board() {
   const [showAddListModal, setShowAddListModal] = useState(false);
   const [newListTitle, setNewListTitle] = useState("");
   const addListInputRef = useRef();
+  const [isFetching, setIsFetching] = useState(false);
+  const hasLoadedRef = useRef(false);
+  const lastFetchTimeRef = useRef(0);
 
   const debouncedSaveDescription = useRef(
     debounce(async (cardId, description, listId) => {
@@ -115,43 +137,241 @@ export default function Board() {
     }, 600)
   ).current;
 
-  useEffect(() => {
-    const fetchBoard = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const res = await boardAPI.getBoard(id);
-        // Process the board data to ensure IDs are strings
-        const processedBoard = {
-          ...res.data,
-          lists: (res.data.lists || []).map((list) => ({
-            ...list,
-            _id: String(list._id),
-            cards: (list.cards || []).map((card) => ({
-              ...card,
-              _id: String(card._id),
-            })),
-          })),
-        };
-        setBoard(processedBoard);
-        showSuccess("Board loaded successfully");
+  // Debounce success messages to prevent spam
+  const debouncedShowSuccess = useRef(
+    debounce((message) => {
+      showSuccess(message);
+    }, 1000)
+  ).current;
 
-        // Join the board for real-time collaboration
-        joinBoard(id);
-      } catch (err) {
+  // Define fetchBoard function outside useEffect so it can be used in real-time listeners
+  const fetchBoard = useCallback(async () => {
+    if (isFetching) {
+      console.log("Already fetching board, skipping...");
+      return;
+    }
+
+    // Rate limiting: prevent fetching more than once every 2 seconds
+    const now = Date.now();
+    if (now - lastFetchTimeRef.current < 2000) {
+      console.log(
+        "Rate limit: skipping fetch, last fetch was",
+        now - lastFetchTimeRef.current,
+        "ms ago"
+      );
+      return;
+    }
+
+    console.log("fetchBoard called for board ID:", id);
+    lastFetchTimeRef.current = now;
+    setIsFetching(true);
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await boardAPI.getBoard(id);
+      console.log("Board data received:", res.data);
+      // Process the board data to ensure IDs are strings
+      const processedBoard = {
+        ...res.data,
+        lists: (res.data.lists || []).map((list) => ({
+          ...list,
+          _id: String(list._id),
+          cards: (list.cards || []).map((card) => ({
+            ...card,
+            _id: String(card._id),
+          })),
+        })),
+      };
+      setBoard(processedBoard);
+      debouncedShowSuccess("Board loaded successfully");
+    } catch (err) {
+      console.error("Error fetching board:", err);
+      console.error("Error details:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        url: err.config?.url,
+      });
+
+      if (err.response?.status === 404) {
+        setError("Board not found");
+        showError("Board not found");
+      } else if (err.response?.status === 401) {
+        setError("Authentication required");
+        showError("Please log in to access this board");
+      } else if (err.response?.status === 403) {
+        setError("Access denied");
+        showError("You don't have permission to access this board");
+      } else {
         setError("Failed to load board data");
         showError("Failed to load board data");
-      } finally {
-        setLoading(false);
       }
-    };
-    fetchBoard();
+    } finally {
+      setLoading(false);
+      setIsFetching(false);
+    }
+  }, [id, showSuccess, showError, isFetching]);
+
+  useEffect(() => {
+    if (!hasLoadedRef.current) {
+      console.log("Initial board load for ID:", id);
+      fetchBoard();
+      hasLoadedRef.current = true;
+    }
+
+    // Only join board if socket is connected
+    if (isConnected && socket) {
+      console.log("Joining board:", id);
+      joinBoard(id);
+    }
 
     // Cleanup: leave board when component unmounts
     return () => {
-      leaveBoard(id);
+      if (isConnected && socket) {
+        console.log("Leaving board:", id);
+        leaveBoard(id);
+      }
     };
-  }, [id, showSuccess, showError, joinBoard, leaveBoard]);
+  }, [id, joinBoard, leaveBoard, fetchBoard, isConnected, socket]);
+
+  // Add real-time update listeners
+  useEffect(() => {
+    if (!socket || !isConnected) {
+      console.log("Socket not connected, skipping real-time listeners");
+      return;
+    }
+
+    console.log("Setting up real-time listeners for board:", id);
+
+    // Listen for card updates from other users
+    const handleCardCreated = (data) => {
+      if (data.boardId === id) {
+        console.log("Received card-created event:", data);
+        setBoard((prev) => {
+          // Check if card already exists to prevent duplicates
+          const cardExists = prev.lists.some((list) =>
+            list.cards.some((card) => card._id === data.card._id)
+          );
+          if (cardExists) return prev;
+
+          return {
+            ...prev,
+            lists: prev.lists.map((list) =>
+              list._id === data.listId
+                ? { ...list, cards: [...list.cards, data.card] }
+                : list
+            ),
+          };
+        });
+      }
+    };
+
+    const handleCardUpdated = (data) => {
+      if (data.boardId === id) {
+        setBoard((prev) => ({
+          ...prev,
+          lists: prev.lists.map((list) =>
+            list._id === data.listId
+              ? {
+                  ...list,
+                  cards: list.cards.map((card) =>
+                    card._id === data.cardId
+                      ? { ...card, ...data.updatedFields }
+                      : card
+                  ),
+                }
+              : list
+          ),
+        }));
+      }
+    };
+
+    const handleCardDeleted = (data) => {
+      if (data.boardId === id) {
+        setBoard((prev) => ({
+          ...prev,
+          lists: prev.lists.map((list) =>
+            list._id === data.listId
+              ? {
+                  ...list,
+                  cards: list.cards.filter((c) => c._id !== data.cardId),
+                }
+              : list
+          ),
+        }));
+      }
+    };
+
+    const handleCardMoved = (data) => {
+      if (data.boardId === id) {
+        console.log("Received card-moved event:", data);
+        // Don't call fetchBoard here as it causes infinite loops
+        // Instead, we'll handle card movement updates in the UI directly
+        // The card movement is already handled by the drag-and-drop logic
+      }
+    };
+
+    const handleListCreated = (data) => {
+      if (data.boardId === id) {
+        console.log("Received list-created event:", data);
+        setBoard((prev) => {
+          // Check if list already exists to prevent duplicates
+          const listExists = prev.lists.some(
+            (list) => list._id === data.list._id
+          );
+          if (listExists) return prev;
+
+          return {
+            ...prev,
+            lists: [...prev.lists, data.list],
+          };
+        });
+      }
+    };
+
+    const handleListUpdated = (data) => {
+      if (data.boardId === id) {
+        setBoard((prev) => ({
+          ...prev,
+          lists: prev.lists.map((list) =>
+            list._id === data.listId ? { ...list, title: data.title } : list
+          ),
+        }));
+      }
+    };
+
+    const handleListDeleted = (data) => {
+      if (data.boardId === id) {
+        setBoard((prev) => ({
+          ...prev,
+          lists: prev.lists.filter((list) => list._id !== data.listId),
+        }));
+      }
+    };
+
+    // Add event listeners
+    socket.on("card-created", handleCardCreated);
+    socket.on("card-updated", handleCardUpdated);
+    socket.on("card-deleted", handleCardDeleted);
+    socket.on("card-moved", handleCardMoved);
+    socket.on("list-created", handleListCreated);
+    socket.on("list-updated", handleListUpdated);
+    socket.on("list-deleted", handleListDeleted);
+
+    // Cleanup listeners
+    return () => {
+      if (socket) {
+        socket.off("card-created", handleCardCreated);
+        socket.off("card-updated", handleCardUpdated);
+        socket.off("card-deleted", handleCardDeleted);
+        socket.off("card-moved", handleCardMoved);
+        socket.off("list-created", handleListCreated);
+        socket.off("list-updated", handleListUpdated);
+        socket.off("list-deleted", handleListDeleted);
+      }
+    };
+  }, [socket, isConnected, id]);
 
   // Add a new list
   const handleAddList = async (title) => {
@@ -492,11 +712,52 @@ export default function Board() {
     setBoard(res.data);
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div className="text-red-500">{error}</div>;
+  if (loading)
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md w-full text-center">
+          <div className="text-red-600 dark:text-red-400 text-lg font-semibold mb-2">
+            {error}
+          </div>
+          <div className="text-red-500 dark:text-red-300 text-sm mb-4">
+            Please check your permissions or try refreshing the page.
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm transition-colors"
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    );
+
   if (!board)
     return (
-      <div className="text-red-500">Board not found or failed to load.</div>
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md w-full text-center">
+          <div className="text-red-600 dark:text-red-400 text-lg font-semibold mb-2">
+            Board not found or failed to load.
+          </div>
+          <div className="text-red-500 dark:text-red-300 text-sm mb-4">
+            The board may have been deleted or you may not have permission to
+            access it.
+          </div>
+          <button
+            onClick={() => (window.location.href = "/dashboard")}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm transition-colors"
+          >
+            Go to Dashboard
+          </button>
+        </div>
+      </div>
     );
 
   return (
@@ -517,7 +778,9 @@ export default function Board() {
             This is a public template for anyone on the internet to copy.
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Board sharing */}
+          <BoardSharing board={board} onMemberUpdate={fetchBoard} />
           {/* Real-time user presence */}
           <UserPresence />
         </div>
