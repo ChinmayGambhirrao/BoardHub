@@ -72,6 +72,9 @@ export const boardAPI = {
 
   // Delete a board
   deleteBoard: (boardId) => api.delete(`/boards/${boardId}`),
+
+  // Join a board via shared link
+  joinBoard: (boardId) => api.post(`/boards/${boardId}/join`),
 };
 
 // List API calls

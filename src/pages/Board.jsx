@@ -201,6 +201,57 @@ export default function Board() {
         setError("Authentication required");
         showError("Please log in to access this board");
       } else if (err.response?.status === 403) {
+        console.log("403 Error response data:", err.response?.data);
+
+        // Check if this is a case where user needs to join the board
+        // Try to join regardless of needsToJoin flag for now (fallback)
+        const shouldTryJoin =
+          err.response?.data?.needsToJoin ||
+          err.response?.data?.message === "Not authorized to access this board";
+
+        if (shouldTryJoin) {
+          console.log("Attempting to join board automatically...");
+          // Attempt to join the board automatically
+          try {
+            const joinRes = await boardAPI.joinBoard(id);
+            console.log("Successfully joined board:", joinRes.data);
+
+            // Use the board data from the join response
+            const processedBoard = {
+              ...joinRes.data.board,
+              lists: (joinRes.data.board.lists || []).map((list) => ({
+                ...list,
+                _id: String(list._id),
+                cards: (list.cards || []).map((card) => ({
+                  ...card,
+                  _id: String(card._id),
+                })),
+              })),
+            };
+            setBoard(processedBoard);
+            showSuccess("Welcome to the board! You've been added as a member.");
+            return;
+          } catch (joinErr) {
+            console.error("Failed to join board:", joinErr);
+            console.error("Join error details:", {
+              message: joinErr.message,
+              response: joinErr.response?.data,
+              status: joinErr.response?.status,
+            });
+
+            // If join failed with 404, the join endpoint might not exist yet
+            if (joinErr.response?.status === 404) {
+              setError("Board sharing not available");
+              showError(
+                "Board sharing feature is not available. Please ask the board owner to add you manually."
+              );
+            } else {
+              setError("Failed to join board");
+              showError("Failed to join board via shared link");
+            }
+            return;
+          }
+        }
         setError("Access denied");
         showError("You don't have permission to access this board");
       } else {
