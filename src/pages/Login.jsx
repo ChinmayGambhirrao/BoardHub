@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { FcGoogle } from "react-icons/fc";
 import ThemeToggle from "../components/ThemeToggle";
+import { PasswordInput } from "../components/ui/password-input";
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -72,14 +73,13 @@ export default function Login() {
             >
               Password
             </label>
-            <input
-              type="password"
+            <PasswordInput
               id="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 mt-1 text-foreground bg-muted border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary transition-colors duration-200"
+              className="w-full mt-1 text-foreground bg-muted border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary transition-colors duration-200"
             />
           </div>
           <button
