@@ -37,10 +37,9 @@ export default function Header() {
     const fetchUser = async () => {
       try {
         const res = await authAPI.getCurrentUser();
-        // User is already available from useAuth context
-        console.log("Current user:", res.data);
+        setUser(res.data);
       } catch (err) {
-        console.log("No user logged in");
+        setUser(null);
       }
     };
     fetchUser();
