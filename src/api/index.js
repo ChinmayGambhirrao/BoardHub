@@ -64,6 +64,9 @@ export const boardAPI = {
   // Get a specific board by ID
   getBoard: (boardId) => api.get(`/boards/${boardId}`),
 
+  // Join board via shared link
+  joinBoard: (boardId) => api.post(`/boards/${boardId}/join`),
+
   // Create a new board
   createBoard: (data) => api.post("/boards", data),
 

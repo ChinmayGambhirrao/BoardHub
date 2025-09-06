@@ -14,6 +14,7 @@ import { Button } from "../components/ui/button";
 import { boardAPI, listAPI, cardAPI } from "../api";
 import { useToast } from "../contexts/ToastContext";
 import { useSocket } from "../contexts/SocketContext";
+import { useAuth } from "../contexts/AuthContext";
 import { Dialog } from "../components/ui/dialog";
 import Card from "../components/Card";
 import CardModal from "../components/CardModal";
@@ -76,6 +77,7 @@ export default function Board() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const { showSuccess, showError } = useToast();
+  const { user } = useAuth();
   const {
     socket,
     isConnected,
@@ -113,6 +115,7 @@ export default function Board() {
   const [isFetching, setIsFetching] = useState(false);
   const hasLoadedRef = useRef(false);
   const lastFetchTimeRef = useRef(0);
+  const [isDragging, setIsDragging] = useState(false);
 
   const debouncedSaveDescription = useRef(
     debounce(async (cardId, description, listId) => {
@@ -201,8 +204,34 @@ export default function Board() {
         setError("Authentication required");
         showError("Please log in to access this board");
       } else if (err.response?.status === 403) {
-        setError("Access denied");
-        showError("You don't have permission to access this board");
+        // Try to join the board automatically
+        console.log(
+          "Access denied, attempting to join board via shared link..."
+        );
+        try {
+          const joinRes = await boardAPI.joinBoard(id);
+          console.log("Successfully joined board:", joinRes.data);
+
+          // Process the board data from the join response
+          const processedBoard = {
+            ...joinRes.data.board,
+            lists: (joinRes.data.board.lists || []).map((list) => ({
+              ...list,
+              _id: String(list._id),
+              cards: (list.cards || []).map((card) => ({
+                ...card,
+                _id: String(card._id),
+              })),
+            })),
+          };
+          setBoard(processedBoard);
+          showSuccess(joinRes.data.message || "Successfully joined the board!");
+          return; // Exit early since we successfully joined
+        } catch (joinErr) {
+          console.error("Failed to join board:", joinErr);
+          setError("Access denied");
+          showError("You don't have permission to access this board");
+        }
       } else {
         setError("Failed to load board data");
         showError("Failed to load board data");
@@ -306,9 +335,71 @@ export default function Board() {
     const handleCardMoved = (data) => {
       if (data.boardId === id) {
         console.log("Received card-moved event:", data);
-        // Don't call fetchBoard here as it causes infinite loops
-        // Instead, we'll handle card movement updates in the UI directly
-        // The card movement is already handled by the drag-and-drop logic
+
+        // Skip if this is the current user's own action (to avoid conflicts)
+        // The movedBy field is added by the server
+        if (data.movedBy && data.movedBy._id === user?._id) {
+          console.log("Skipping own card movement event");
+          return;
+        }
+
+        // Skip if user is currently dragging to avoid conflicts
+        if (isDragging) {
+          console.log(
+            "Skipping card movement event - user is currently dragging"
+          );
+          return;
+        }
+
+        // Update the UI to reflect the card movement from another user
+        setBoard((prevBoard) => {
+          // Find the source and destination lists
+          const sourceList = prevBoard.lists.find(
+            (list) => list._id === data.sourceListId
+          );
+          const destList = prevBoard.lists.find(
+            (list) => list._id === data.destinationListId
+          );
+
+          if (!sourceList || !destList) {
+            console.warn(
+              "Source or destination list not found for card movement"
+            );
+            return prevBoard;
+          }
+
+          // Find the card being moved
+          const cardToMove = sourceList.cards.find(
+            (card) => card._id === data.cardId
+          );
+          if (!cardToMove) {
+            console.warn("Card not found in source list");
+            return prevBoard;
+          }
+
+          // Create new arrays for source and destination cards
+          const newSourceCards = sourceList.cards.filter(
+            (card) => card._id !== data.cardId
+          );
+          const newDestCards = [...destList.cards];
+
+          // Insert the card at the correct position in the destination list
+          newDestCards.splice(data.destinationIndex, 0, cardToMove);
+
+          // Update the board state
+          return {
+            ...prevBoard,
+            lists: prevBoard.lists.map((list) => {
+              if (list._id === data.sourceListId) {
+                return { ...list, cards: newSourceCards };
+              }
+              if (list._id === data.destinationListId) {
+                return { ...list, cards: newDestCards };
+              }
+              return list;
+            }),
+          };
+        });
       }
     };
 
@@ -371,7 +462,7 @@ export default function Board() {
         socket.off("list-deleted", handleListDeleted);
       }
     };
-  }, [socket, isConnected, id]);
+  }, [socket, isConnected, id, user, isDragging]);
 
   // Add a new list
   const handleAddList = async (title) => {
@@ -555,9 +646,17 @@ export default function Board() {
     }
   };
 
+  // Drag start handler
+  const onDragStart = (result) => {
+    setIsDragging(true);
+  };
+
   // Drag-and-drop handler
   const onDragEnd = async (result) => {
     const { destination, source, draggableId, type } = result;
+
+    // Reset dragging state
+    setIsDragging(false);
 
     // If there's no destination or dropped in the same place, do nothing
     if (!destination) {
@@ -727,7 +826,9 @@ export default function Board() {
             {error}
           </div>
           <div className="text-red-500 dark:text-red-300 text-sm mb-4">
-            Please check your permissions or try refreshing the page.
+            {error === "Access denied"
+              ? "This board is private. Please contact the board owner for access."
+              : "Please check your permissions or try refreshing the page."}
           </div>
           <button
             onClick={() => window.location.reload()}
@@ -786,7 +887,7 @@ export default function Board() {
         </div>
       </div>
       {/* Lists as columns - Made responsive with horizontal scroll */}
-      <DragDropContext onDragEnd={onDragEnd}>
+      <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
         <Droppable
           droppableId="board-droppable"
           direction="horizontal"
