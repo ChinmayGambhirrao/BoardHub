@@ -333,12 +333,12 @@ export default function Board() {
     };
 
     const handleCardMoved = (data) => {
-      if (data.boardId === id) {
+      if (String(data.boardId) === String(id)) {
         console.log("Received card-moved event:", data);
 
         // Skip if this is the current user's own action (to avoid conflicts)
         // The movedBy field is added by the server
-        if (data.movedBy && data.movedBy._id === user?._id) {
+        if (data.movedBy && String(data.movedBy._id) === String(user?._id)) {
           console.log("Skipping own card movement event");
           return;
         }
@@ -351,54 +351,129 @@ export default function Board() {
           return;
         }
 
+        // Show notification for card movement
+        if (data.movedBy && data.movedBy.name) {
+          showSuccess(`${data.movedBy.name} moved a card`);
+        }
+
         // Update the UI to reflect the card movement from another user
         setBoard((prevBoard) => {
+          const sourceListId = String(data.sourceListId);
+          const destinationListId = String(data.destinationListId);
+          const movedCardId = String(data.cardId);
+          console.log("Updating board state for card movement:", {
+            cardId: movedCardId,
+            sourceListId,
+            destinationListId,
+            destinationIndex: data.destinationIndex,
+            currentLists: prevBoard.lists.map((l) => ({
+              id: l._id,
+              title: l.title,
+              cardCount: l.cards.length,
+            })),
+          });
+
           // Find the source and destination lists
           const sourceList = prevBoard.lists.find(
-            (list) => list._id === data.sourceListId
+            (list) => String(list._id) === sourceListId
           );
           const destList = prevBoard.lists.find(
-            (list) => list._id === data.destinationListId
+            (list) => String(list._id) === destinationListId
           );
 
           if (!sourceList || !destList) {
             console.warn(
-              "Source or destination list not found for card movement"
+              "Source or destination list not found for card movement",
+              {
+                sourceList,
+                destList,
+                availableLists: prevBoard.lists.map((l) => l._id),
+              }
             );
+            // Fallback: refetch board to stay consistent
+            try {
+              fetchBoard();
+            } catch (_) {}
             return prevBoard;
           }
 
           // Find the card being moved
           const cardToMove = sourceList.cards.find(
-            (card) => card._id === data.cardId
+            (card) => String(card._id) === movedCardId
           );
           if (!cardToMove) {
-            console.warn("Card not found in source list");
+            console.warn("Card not found in source list", {
+              cardId: movedCardId,
+              availableCards: sourceList.cards.map((c) => c._id),
+            });
+            // Fallback: refetch board to stay consistent
+            try {
+              fetchBoard();
+            } catch (_) {}
             return prevBoard;
           }
 
-          // Create new arrays for source and destination cards
+          // Handle same-list reordering without duplication
+          if (sourceListId === destinationListId) {
+            const listCards = [...sourceList.cards];
+            const fromIndex = listCards.findIndex(
+              (c) => String(c._id) === movedCardId
+            );
+            if (fromIndex === -1) {
+              console.warn("Card not found for same-list move reordering");
+              try {
+                fetchBoard();
+              } catch (_) {}
+              return prevBoard;
+            }
+            const [moved] = listCards.splice(fromIndex, 1);
+            const toIndex =
+              fromIndex < data.destinationIndex
+                ? data.destinationIndex - 1
+                : data.destinationIndex;
+            listCards.splice(toIndex, 0, moved);
+
+            return {
+              ...prevBoard,
+              lists: prevBoard.lists.map((list) =>
+                String(list._id) === sourceListId
+                  ? { ...list, cards: listCards }
+                  : list
+              ),
+            };
+          }
+
+          // Cross-list move
           const newSourceCards = sourceList.cards.filter(
-            (card) => card._id !== data.cardId
+            (card) => String(card._id) !== movedCardId
           );
           const newDestCards = [...destList.cards];
-
-          // Insert the card at the correct position in the destination list
           newDestCards.splice(data.destinationIndex, 0, cardToMove);
 
+          console.log("Card movement update:", {
+            sourceListTitle: sourceList.title,
+            destListTitle: destList.title,
+            cardTitle: cardToMove.title,
+            newSourceCardCount: newSourceCards.length,
+            newDestCardCount: newDestCards.length,
+          });
+
           // Update the board state
-          return {
+          const updatedBoard = {
             ...prevBoard,
             lists: prevBoard.lists.map((list) => {
-              if (list._id === data.sourceListId) {
+              if (String(list._id) === sourceListId) {
                 return { ...list, cards: newSourceCards };
               }
-              if (list._id === data.destinationListId) {
+              if (String(list._id) === destinationListId) {
                 return { ...list, cards: newDestCards };
               }
               return list;
             }),
           };
+
+          console.log("Board state updated successfully");
+          return updatedBoard;
         });
       }
     };
@@ -442,6 +517,10 @@ export default function Board() {
     };
 
     // Add event listeners
+    console.log("Setting up socket event listeners for board:", id);
+    console.log("Socket available:", !!socket);
+    console.log("Socket connected:", isConnected);
+
     socket.on("card-created", handleCardCreated);
     socket.on("card-updated", handleCardUpdated);
     socket.on("card-deleted", handleCardDeleted);
@@ -449,6 +528,16 @@ export default function Board() {
     socket.on("list-created", handleListCreated);
     socket.on("list-updated", handleListUpdated);
     socket.on("list-deleted", handleListDeleted);
+
+    console.log("Socket event listeners set up successfully");
+
+    // Add a general event listener to debug all socket events
+    const debugAllEvents = (eventName, ...args) => {
+      console.log(`🔍 Socket event received: ${eventName}`, args);
+    };
+
+    // Listen to all events for debugging
+    socket.onAny(debugAllEvents);
 
     // Cleanup listeners
     return () => {
@@ -460,6 +549,7 @@ export default function Board() {
         socket.off("list-created", handleListCreated);
         socket.off("list-updated", handleListUpdated);
         socket.off("list-deleted", handleListDeleted);
+        socket.offAny(debugAllEvents);
       }
     };
   }, [socket, isConnected, id, user, isDragging]);
@@ -754,15 +844,10 @@ export default function Board() {
         position: destination.index,
       });
 
-      // Emit real-time event
-      emitCardMoved({
-        boardId: id,
-        cardId: draggableId,
-        sourceListId: source.droppableId,
-        destinationListId: destination.droppableId,
-        sourceIndex: source.index,
-        destinationIndex: destination.index,
-      });
+      // Server will emit the real-time event automatically
+      console.log(
+        "Card moved successfully, server will broadcast to other users"
+      );
     } catch (err) {
       console.error("Failed to move card:", err);
       showError("Failed to move card");

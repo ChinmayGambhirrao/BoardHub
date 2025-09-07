@@ -117,9 +117,8 @@ export const SocketProvider = ({ children }) => {
       addNotification(`${data.deletedBy.name} deleted a card`, "warning");
     });
 
-    newSocket.on("card-moved", (data) => {
-      addNotification(`${data.movedBy.name} moved a card`, "info");
-    });
+    // Note: card-moved events are handled in Board component for UI updates
+    // We don't need to handle them here as they need access to board state
 
     // List events
     newSocket.on("list-created", (data) => {
