@@ -1,13 +1,15 @@
 import React, { useState } from "react";
-import { Share2, Users, Copy, Mail } from "lucide-react";
+import { Share2, Users, Copy, Mail, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Dialog } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { useToast } from "../contexts/ToastContext";
+import { inviteAPI } from "../api";
 
 export default function BoardSharing({ board, onMemberUpdate }) {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [isInviting, setIsInviting] = useState(false);
   const { showSuccess, showError } = useToast();
 
   const handleCopyLink = () => {
@@ -28,12 +30,35 @@ export default function BoardSharing({ board, onMemberUpdate }) {
       return;
     }
 
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(inviteEmail)) {
+      showError("Please enter a valid email address");
+      return;
+    }
+
+    setIsInviting(true);
     try {
-      // TODO: Implement API call to invite user by email
-      showSuccess(`Invitation sent to ${inviteEmail}`);
+      const response = await inviteAPI.sendInvitation({
+        email: inviteEmail.trim(),
+        boardId: board._id,
+        role: "member",
+      });
+
+      showSuccess(response.data.message || `Invitation sent to ${inviteEmail}`);
       setInviteEmail("");
+
+      // Refresh board data to show updated member count
+      if (onMemberUpdate) {
+        onMemberUpdate();
+      }
     } catch (error) {
-      showError("Failed to send invitation");
+      console.error("Invitation error:", error);
+      const errorMessage =
+        error.response?.data?.error || "Failed to send invitation";
+      showError(errorMessage);
+    } finally {
+      setIsInviting(false);
     }
   };
 
@@ -91,8 +116,16 @@ export default function BoardSharing({ board, onMemberUpdate }) {
                     onChange={(e) => setInviteEmail(e.target.value)}
                     className="flex-1"
                   />
-                  <Button onClick={handleInviteByEmail} size="sm">
-                    <Mail className="w-4 h-4" />
+                  <Button
+                    onClick={handleInviteByEmail}
+                    size="sm"
+                    disabled={isInviting}
+                  >
+                    {isInviting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Mail className="w-4 h-4" />
+                    )}
                   </Button>
                 </div>
               </div>

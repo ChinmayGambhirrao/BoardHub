@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Landing from "./pages/Landing";
+import InviteAccept from "./pages/InviteAccept";
 import Header from "./components/Header";
 import { useAuth } from "./contexts/AuthContext";
 import OAuthSuccess from "./pages/OAuthSuccess";
@@ -38,6 +39,7 @@ export default function AppRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/oauth-success" element={<OAuthSuccess />} />
+        <Route path="/invite/:token" element={<InviteAccept />} />
       </Routes>
     </>
   );

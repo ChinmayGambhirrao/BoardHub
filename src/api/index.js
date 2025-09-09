@@ -136,4 +136,16 @@ export const authAPI = {
   },
 };
 
+// Invitation API calls
+export const inviteAPI = {
+  // Send board invitation via email
+  sendInvitation: (data) => api.post("/invite", data),
+
+  // Get invitation details by token
+  getInvitation: (token) => api.get(`/invite/${token}`),
+
+  // Accept invitation
+  acceptInvitation: (token) => api.post(`/invite/${token}/accept`),
+};
+
 export default api;
