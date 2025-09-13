@@ -22,6 +22,7 @@ export default function InviteAccept() {
       } catch (error) {
         console.error("Error fetching invitation:", error);
         setError(
+          
           error.response?.data?.error || "Invalid or expired invitation"
         );
       } finally {
