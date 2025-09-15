@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import {
   Plus,
@@ -13,14 +13,8 @@ import { useParams } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { boardAPI, listAPI, cardAPI } from "../api";
 import { useToast } from "../contexts/ToastContext";
-import { useSocket } from "../contexts/SocketContext";
-import { useAuth } from "../contexts/AuthContext";
 import { Dialog } from "../components/ui/dialog";
 import Card from "../components/Card";
-import CardModal from "../components/CardModal";
-import UserPresence from "../components/UserPresence";
-import NotificationToast from "../components/NotificationToast";
-import BoardSharing from "../components/BoardSharing";
 
 const SAMPLE_LISTS = [
   {
@@ -47,7 +41,7 @@ const SAMPLE_LISTS = [
   },
   {
     title: "🎉 Done",
-    cards: [{ title: "Signed up for BoardHub" }],
+    cards: [{ title: "Signed up for Trello" }],
   },
 ];
 
@@ -63,40 +57,9 @@ function debounce(fn, delay) {
 export default function Board() {
   const { id } = useParams();
   const [board, setBoard] = useState(null);
-
-  // Validate board ID
-  useEffect(() => {
-    if (!id) {
-      console.error("No board ID provided");
-      setError("Invalid board URL");
-      return;
-    }
-
-    console.log("Board component mounted with ID:", id);
-  }, [id]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const { showSuccess, showError } = useToast();
-  const { user } = useAuth();
-  const {
-    socket,
-    isConnected,
-    joinBoard,
-    leaveBoard,
-    emitCardCreated,
-    emitCardUpdated,
-    emitCardDeleted,
-    emitCardMoved,
-    emitListCreated,
-    emitListUpdated,
-    emitListDeleted,
-    emitBoardUpdated,
-  } = useSocket();
-
-  // Debug logging
-  console.log("Board component - socket:", socket);
-  console.log("Board component - isConnected:", isConnected);
-  console.log("Board component - board ID:", id);
   const [showAddCard, setShowAddCard] = useState({});
   const [newCardTitle, setNewCardTitle] = useState("");
   const [selectedCard, setSelectedCard] = useState(null);
@@ -112,10 +75,6 @@ export default function Board() {
   const [showAddListModal, setShowAddListModal] = useState(false);
   const [newListTitle, setNewListTitle] = useState("");
   const addListInputRef = useRef();
-  const [isFetching, setIsFetching] = useState(false);
-  const hasLoadedRef = useRef(false);
-  const lastFetchTimeRef = useRef(0);
-  const [isDragging, setIsDragging] = useState(false);
 
   const debouncedSaveDescription = useRef(
     debounce(async (cardId, description, listId) => {
@@ -140,419 +99,49 @@ export default function Board() {
     }, 600)
   ).current;
 
-  // Debounce success messages to prevent spam
-  const debouncedShowSuccess = useRef(
-    debounce((message) => {
-      showSuccess(message);
-    }, 1000)
-  ).current;
-
-  // Define fetchBoard function outside useEffect so it can be used in real-time listeners
-  const fetchBoard = useCallback(async () => {
-    if (isFetching) {
-      console.log("Already fetching board, skipping...");
-      return;
-    }
-
-    // Rate limiting: prevent fetching more than once every 2 seconds
-    const now = Date.now();
-    if (now - lastFetchTimeRef.current < 2000) {
-      console.log(
-        "Rate limit: skipping fetch, last fetch was",
-        now - lastFetchTimeRef.current,
-        "ms ago"
-      );
-      return;
-    }
-
-    console.log("fetchBoard called for board ID:", id);
-    lastFetchTimeRef.current = now;
-    setIsFetching(true);
-    setLoading(true);
-    setError("");
-
-    try {
-      const res = await boardAPI.getBoard(id);
-      console.log("Board data received:", res.data);
-      // Process the board data to ensure IDs are strings
-      const processedBoard = {
-        ...res.data,
-        lists: (res.data.lists || []).map((list) => ({
-          ...list,
-          _id: String(list._id),
-          cards: (list.cards || []).map((card) => ({
-            ...card,
-            _id: String(card._id),
-          })),
-        })),
-      };
-      setBoard(processedBoard);
-      debouncedShowSuccess("Board loaded successfully");
-    } catch (err) {
-      console.error("Error fetching board:", err);
-      console.error("Error details:", {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-        url: err.config?.url,
-      });
-
-      if (err.response?.status === 404) {
-        setError("Board not found");
-        showError("Board not found");
-      } else if (err.response?.status === 401) {
-        setError("Authentication required");
-        showError("Please log in to access this board");
-      } else if (err.response?.status === 403) {
-        // Try to join the board automatically
-        console.log(
-          "Access denied, attempting to join board via shared link..."
-        );
-        try {
-          const joinRes = await boardAPI.joinBoard(id);
-          console.log("Successfully joined board:", joinRes.data);
-
-          // Process the board data from the join response
-          const processedBoard = {
-            ...joinRes.data.board,
-            lists: (joinRes.data.board.lists || []).map((list) => ({
-              ...list,
-              _id: String(list._id),
-              cards: (list.cards || []).map((card) => ({
-                ...card,
-                _id: String(card._id),
-              })),
-            })),
-          };
-          setBoard(processedBoard);
-          showSuccess(joinRes.data.message || "Successfully joined the board!");
-          return; // Exit early since we successfully joined
-        } catch (joinErr) {
-          console.error("Failed to join board:", joinErr);
-          setError("Access denied");
-          showError("You don't have permission to access this board");
+  useEffect(() => {
+    const fetchBoard = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        let res = await boardAPI.getBoard(id);
+        // If board has no lists, add sample lists/cards
+        if (!res.data.lists || res.data.lists.length === 0) {
+          for (const sampleList of SAMPLE_LISTS) {
+            const listRes = await listAPI.createList(id, {
+              title: sampleList.title,
+            });
+            for (const card of sampleList.cards) {
+              await cardAPI.createCard(listRes.data._id, { title: card.title });
+            }
+          }
+          res = await boardAPI.getBoard(id);
         }
-      } else {
+
+        // Process the board data to ensure IDs are strings
+        const processedBoard = {
+          ...res.data,
+          lists: res.data.lists.map((list) => ({
+            ...list,
+            _id: String(list._id),
+            cards: (list.cards || []).map((card) => ({
+              ...card,
+              _id: String(card._id),
+            })),
+          })),
+        };
+
+        setBoard(processedBoard);
+        showSuccess("Board loaded successfully");
+      } catch (err) {
         setError("Failed to load board data");
         showError("Failed to load board data");
-      }
-    } finally {
-      setLoading(false);
-      setIsFetching(false);
-    }
-  }, [id, showSuccess, showError, isFetching]);
-
-  useEffect(() => {
-    if (!hasLoadedRef.current) {
-      console.log("Initial board load for ID:", id);
-      fetchBoard();
-      hasLoadedRef.current = true;
-    }
-
-    // Only join board if socket is connected
-    if (isConnected && socket) {
-      console.log("Joining board:", id);
-      joinBoard(id);
-    }
-
-    // Cleanup: leave board when component unmounts
-    return () => {
-      if (isConnected && socket) {
-        console.log("Leaving board:", id);
-        leaveBoard(id);
+      } finally {
+        setLoading(false);
       }
     };
-  }, [id, joinBoard, leaveBoard, fetchBoard, isConnected, socket]);
-
-  // Add real-time update listeners
-  useEffect(() => {
-    if (!socket || !isConnected) {
-      console.log("Socket not connected, skipping real-time listeners");
-      return;
-    }
-
-    console.log("Setting up real-time listeners for board:", id);
-
-    // Listen for card updates from other users
-    const handleCardCreated = (data) => {
-      if (data.boardId === id) {
-        console.log("Received card-created event:", data);
-        setBoard((prev) => {
-          // Check if card already exists to prevent duplicates
-          const cardExists = prev.lists.some((list) =>
-            list.cards.some((card) => card._id === data.card._id)
-          );
-          if (cardExists) return prev;
-
-          return {
-            ...prev,
-            lists: prev.lists.map((list) =>
-              list._id === data.listId
-                ? { ...list, cards: [...list.cards, data.card] }
-                : list
-            ),
-          };
-        });
-      }
-    };
-
-    const handleCardUpdated = (data) => {
-      if (data.boardId === id) {
-        setBoard((prev) => ({
-          ...prev,
-          lists: prev.lists.map((list) =>
-            list._id === data.listId
-              ? {
-                  ...list,
-                  cards: list.cards.map((card) =>
-                    card._id === data.cardId
-                      ? { ...card, ...data.updatedFields }
-                      : card
-                  ),
-                }
-              : list
-          ),
-        }));
-      }
-    };
-
-    const handleCardDeleted = (data) => {
-      if (data.boardId === id) {
-        setBoard((prev) => ({
-          ...prev,
-          lists: prev.lists.map((list) =>
-            list._id === data.listId
-              ? {
-                  ...list,
-                  cards: list.cards.filter((c) => c._id !== data.cardId),
-                }
-              : list
-          ),
-        }));
-      }
-    };
-
-    const handleCardMoved = (data) => {
-      if (String(data.boardId) === String(id)) {
-        console.log("Received card-moved event:", data);
-
-        // Skip if this is the current user's own action (to avoid conflicts)
-        // The movedBy field is added by the server
-        if (data.movedBy && String(data.movedBy._id) === String(user?._id)) {
-          console.log("Skipping own card movement event");
-          return;
-        }
-
-        // Skip if user is currently dragging to avoid conflicts
-        if (isDragging) {
-          console.log(
-            "Skipping card movement event - user is currently dragging"
-          );
-          return;
-        }
-
-        // Show notification for card movement
-        if (data.movedBy && data.movedBy.name) {
-          showSuccess(`${data.movedBy.name} moved a card`);
-        }
-
-        // Update the UI to reflect the card movement from another user
-        setBoard((prevBoard) => {
-          const sourceListId = String(data.sourceListId);
-          const destinationListId = String(data.destinationListId);
-          const movedCardId = String(data.cardId);
-          console.log("Updating board state for card movement:", {
-            cardId: movedCardId,
-            sourceListId,
-            destinationListId,
-            destinationIndex: data.destinationIndex,
-            currentLists: prevBoard.lists.map((l) => ({
-              id: l._id,
-              title: l.title,
-              cardCount: l.cards.length,
-            })),
-          });
-
-          // Find the source and destination lists
-          const sourceList = prevBoard.lists.find(
-            (list) => String(list._id) === sourceListId
-          );
-          const destList = prevBoard.lists.find(
-            (list) => String(list._id) === destinationListId
-          );
-
-          if (!sourceList || !destList) {
-            console.warn(
-              "Source or destination list not found for card movement",
-              {
-                sourceList,
-                destList,
-                availableLists: prevBoard.lists.map((l) => l._id),
-              }
-            );
-            // Fallback: refetch board to stay consistent
-            try {
-              fetchBoard();
-            } catch (_) {}
-            return prevBoard;
-          }
-
-          // Find the card being moved
-          const cardToMove = sourceList.cards.find(
-            (card) => String(card._id) === movedCardId
-          );
-          if (!cardToMove) {
-            console.warn("Card not found in source list", {
-              cardId: movedCardId,
-              availableCards: sourceList.cards.map((c) => c._id),
-            });
-            // Fallback: refetch board to stay consistent
-            try {
-              fetchBoard();
-            } catch (_) {}
-            return prevBoard;
-          }
-
-          // Handle same-list reordering without duplication
-          if (sourceListId === destinationListId) {
-            const listCards = [...sourceList.cards];
-            const fromIndex = listCards.findIndex(
-              (c) => String(c._id) === movedCardId
-            );
-            if (fromIndex === -1) {
-              console.warn("Card not found for same-list move reordering");
-              try {
-                fetchBoard();
-              } catch (_) {}
-              return prevBoard;
-            }
-            const [moved] = listCards.splice(fromIndex, 1);
-            const toIndex =
-              fromIndex < data.destinationIndex
-                ? data.destinationIndex - 1
-                : data.destinationIndex;
-            listCards.splice(toIndex, 0, moved);
-
-            return {
-              ...prevBoard,
-              lists: prevBoard.lists.map((list) =>
-                String(list._id) === sourceListId
-                  ? { ...list, cards: listCards }
-                  : list
-              ),
-            };
-          }
-
-          // Cross-list move
-          const newSourceCards = sourceList.cards.filter(
-            (card) => String(card._id) !== movedCardId
-          );
-          const newDestCards = [...destList.cards];
-          newDestCards.splice(data.destinationIndex, 0, cardToMove);
-
-          console.log("Card movement update:", {
-            sourceListTitle: sourceList.title,
-            destListTitle: destList.title,
-            cardTitle: cardToMove.title,
-            newSourceCardCount: newSourceCards.length,
-            newDestCardCount: newDestCards.length,
-          });
-
-          // Update the board state
-          const updatedBoard = {
-            ...prevBoard,
-            lists: prevBoard.lists.map((list) => {
-              if (String(list._id) === sourceListId) {
-                return { ...list, cards: newSourceCards };
-              }
-              if (String(list._id) === destinationListId) {
-                return { ...list, cards: newDestCards };
-              }
-              return list;
-            }),
-          };
-
-          console.log("Board state updated successfully");
-          return updatedBoard;
-        });
-      }
-    };
-
-    const handleListCreated = (data) => {
-      if (data.boardId === id) {
-        console.log("Received list-created event:", data);
-        setBoard((prev) => {
-          // Check if list already exists to prevent duplicates
-          const listExists = prev.lists.some(
-            (list) => list._id === data.list._id
-          );
-          if (listExists) return prev;
-
-          return {
-            ...prev,
-            lists: [...prev.lists, data.list],
-          };
-        });
-      }
-    };
-
-    const handleListUpdated = (data) => {
-      if (data.boardId === id) {
-        setBoard((prev) => ({
-          ...prev,
-          lists: prev.lists.map((list) =>
-            list._id === data.listId ? { ...list, title: data.title } : list
-          ),
-        }));
-      }
-    };
-
-    const handleListDeleted = (data) => {
-      if (data.boardId === id) {
-        setBoard((prev) => ({
-          ...prev,
-          lists: prev.lists.filter((list) => list._id !== data.listId),
-        }));
-      }
-    };
-
-    // Add event listeners
-    console.log("Setting up socket event listeners for board:", id);
-    console.log("Socket available:", !!socket);
-    console.log("Socket connected:", isConnected);
-
-    socket.on("card-created", handleCardCreated);
-    socket.on("card-updated", handleCardUpdated);
-    socket.on("card-deleted", handleCardDeleted);
-    socket.on("card-moved", handleCardMoved);
-    socket.on("list-created", handleListCreated);
-    socket.on("list-updated", handleListUpdated);
-    socket.on("list-deleted", handleListDeleted);
-
-    console.log("Socket event listeners set up successfully");
-
-    // Add a general event listener to debug all socket events
-    const debugAllEvents = (eventName, ...args) => {
-      console.log(`🔍 Socket event received: ${eventName}`, args);
-    };
-
-    // Listen to all events for debugging
-    socket.onAny(debugAllEvents);
-
-    // Cleanup listeners
-    return () => {
-      if (socket) {
-        socket.off("card-created", handleCardCreated);
-        socket.off("card-updated", handleCardUpdated);
-        socket.off("card-deleted", handleCardDeleted);
-        socket.off("card-moved", handleCardMoved);
-        socket.off("list-created", handleListCreated);
-        socket.off("list-updated", handleListUpdated);
-        socket.off("list-deleted", handleListDeleted);
-        socket.offAny(debugAllEvents);
-      }
-    };
-  }, [socket, isConnected, id, user, isDragging]);
+    fetchBoard();
+  }, [id, showSuccess, showError]);
 
   // Add a new list
   const handleAddList = async (title) => {
@@ -560,12 +149,6 @@ export default function Board() {
       const res = await listAPI.createList(id, { title });
       setBoard((prev) => ({ ...prev, lists: [...prev.lists, res.data] }));
       showSuccess("List added");
-
-      // Emit real-time event
-      emitListCreated({
-        boardId: id,
-        list: res.data,
-      });
     } catch (err) {
       showError("Failed to add list");
     }
@@ -582,13 +165,6 @@ export default function Board() {
         ),
       }));
       showSuccess("List updated");
-
-      // Emit real-time event
-      emitListUpdated({
-        boardId: id,
-        listId,
-        title: newTitle,
-      });
     } catch (err) {
       showError("Failed to update list");
     }
@@ -608,13 +184,6 @@ export default function Board() {
     try {
       await listAPI.deleteList(listId);
       showSuccess("List deleted");
-
-      // Emit real-time event
-      emitListDeleted({
-        boardId: id,
-        listId,
-        listTitle: list.title,
-      });
     } catch (err) {
       showError("Failed to delete list");
     }
@@ -629,10 +198,7 @@ export default function Board() {
       for (const card of undoData.cards) {
         await cardAPI.createCard(res.data._id, {
           title: card.title,
-          description: card.description || "",
-          labels: card.labels || [],
-          checklists: card.checklists || [],
-          dueDate: card.dueDate || { start: null, end: null },
+          description: card.description,
         });
       }
       // Refresh board
@@ -649,16 +215,8 @@ export default function Board() {
 
   // Add a new card to a list
   const handleAddCard = async (listId, cardData) => {
-    // Ensure new card uses the new structure
-    const newCard = {
-      title: cardData.title || "",
-      description: cardData.description || "",
-      labels: cardData.labels || [],
-      checklists: cardData.checklists || [],
-      dueDate: cardData.dueDate || { start: null, end: null },
-    };
     try {
-      const res = await cardAPI.createCard(listId, newCard);
+      const res = await cardAPI.createCard(listId, cardData);
       setBoard((prev) => ({
         ...prev,
         lists: prev.lists.map((list) =>
@@ -668,22 +226,15 @@ export default function Board() {
         ),
       }));
       showSuccess("Card added");
-
-      // Emit real-time event
-      emitCardCreated({
-        boardId: id,
-        listId,
-        card: res.data,
-      });
     } catch (err) {
       showError("Failed to add card");
     }
   };
 
   // Edit a card
-  const handleEditCard = async (cardId, listId, updatedFields) => {
+  const handleEditCard = async (cardId, listId, newTitle) => {
     try {
-      await cardAPI.updateCard(cardId, updatedFields);
+      await cardAPI.updateCard(cardId, { title: newTitle });
       setBoard((prev) => ({
         ...prev,
         lists: prev.lists.map((list) =>
@@ -691,21 +242,13 @@ export default function Board() {
             ? {
                 ...list,
                 cards: list.cards.map((card) =>
-                  card._id === cardId ? { ...card, ...updatedFields } : card
+                  card._id === cardId ? { ...card, title: newTitle } : card
                 ),
               }
             : list
         ),
       }));
       showSuccess("Card updated");
-
-      // Emit real-time event
-      emitCardUpdated({
-        boardId: id,
-        listId,
-        cardId,
-        updatedFields,
-      });
     } catch (err) {
       showError("Failed to update card");
     }
@@ -724,29 +267,14 @@ export default function Board() {
         ),
       }));
       showSuccess("Card deleted");
-
-      // Emit real-time event
-      emitCardDeleted({
-        boardId: id,
-        listId,
-        cardId,
-      });
     } catch (err) {
       showError("Failed to delete card");
     }
   };
 
-  // Drag start handler
-  const onDragStart = (result) => {
-    setIsDragging(true);
-  };
-
   // Drag-and-drop handler
   const onDragEnd = async (result) => {
     const { destination, source, draggableId, type } = result;
-
-    // Reset dragging state
-    setIsDragging(false);
 
     // If there's no destination or dropped in the same place, do nothing
     if (!destination) {
@@ -843,11 +371,6 @@ export default function Board() {
         destinationListId: destination.droppableId,
         position: destination.index,
       });
-
-      // Server will emit the real-time event automatically
-      console.log(
-        "Card moved successfully, server will broadcast to other users"
-      );
     } catch (err) {
       console.error("Failed to move card:", err);
       showError("Failed to move card");
@@ -896,55 +419,9 @@ export default function Board() {
     setBoard(res.data);
   };
 
-  if (loading)
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading...</div>
-      </div>
-    );
-
-  if (error)
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md w-full text-center">
-          <div className="text-red-600 dark:text-red-400 text-lg font-semibold mb-2">
-            {error}
-          </div>
-          <div className="text-red-500 dark:text-red-300 text-sm mb-4">
-            {error === "Access denied"
-              ? "This board is private. Please contact the board owner for access."
-              : "Please check your permissions or try refreshing the page."}
-          </div>
-          <button
-            onClick={() => window.location.reload()}
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm transition-colors"
-          >
-            Refresh Page
-          </button>
-        </div>
-      </div>
-    );
-
-  if (!board)
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md w-full text-center">
-          <div className="text-red-600 dark:text-red-400 text-lg font-semibold mb-2">
-            Board not found or failed to load.
-          </div>
-          <div className="text-red-500 dark:text-red-300 text-sm mb-4">
-            The board may have been deleted or you may not have permission to
-            access it.
-          </div>
-          <button
-            onClick={() => (window.location.href = "/dashboard")}
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm transition-colors"
-          >
-            Go to Dashboard
-          </button>
-        </div>
-      </div>
-    );
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div className="text-red-500">{error}</div>;
+  if (!board) return null;
 
   return (
     <div
@@ -964,15 +441,20 @@ export default function Board() {
             This is a public template for anyone on the internet to copy.
           </span>
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* Board sharing */}
-          <BoardSharing board={board} onMemberUpdate={fetchBoard} />
-          {/* Real-time user presence */}
-          <UserPresence />
+        <div className="flex items-center gap-2">
+          {/* Fake member avatars */}
+          {["DO", "JH", "ZS", "CC"].map((initials, i) => (
+            <div
+              key={i}
+              className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs md:text-sm font-bold border-2 border-white -ml-2 first:ml-0"
+            >
+              {initials}
+            </div>
+          ))}
         </div>
       </div>
       {/* Lists as columns - Made responsive with horizontal scroll */}
-      <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
+      <DragDropContext onDragEnd={onDragEnd}>
         <Droppable
           droppableId="board-droppable"
           direction="horizontal"
@@ -1003,12 +485,12 @@ export default function Board() {
                           ref={provided.innerRef}
                           {...provided.draggableProps}
                           {...provided.dragHandleProps}
-                          className="bg-card rounded-lg p-3 md:p-4 w-72 md:w-80 min-w-[18rem] md:min-w-[20rem] flex-shrink-0 max-h-[calc(100vh-100px)] flex flex-col border border-border transition-colors duration-300"
+                          className="bg-black/60 rounded-lg p-3 md:p-4 w-72 md:w-80 min-w-[18rem] md:min-w-[20rem] flex-shrink-0 max-h-[calc(100vh-100px)] flex flex-col"
                         >
                           <div className="flex justify-between items-center mb-3 md:mb-4">
                             {editingListId === list._id ? (
                               <input
-                                className="text-base md:text-lg font-semibold bg-muted text-foreground rounded px-2 py-1 w-40 border border-border transition-colors duration-200"
+                                className="text-base md:text-lg font-semibold bg-gray-900 text-white rounded px-2 py-1 w-40"
                                 value={editingListTitle}
                                 autoFocus
                                 onChange={(e) =>
@@ -1045,7 +527,7 @@ export default function Board() {
                               />
                             ) : (
                               <h2
-                                className="text-base md:text-lg text-foreground font-semibold cursor-pointer truncate pr-2 transition-colors duration-200"
+                                className="text-base md:text-lg text-white font-semibold cursor-pointer truncate pr-2"
                                 onClick={() => {
                                   setEditingListId(list._id);
                                   setEditingListTitle(list.title);
@@ -1055,10 +537,10 @@ export default function Board() {
                               </h2>
                             )}
                             <div className="relative group">
-                              <MoreHorizontal className="text-muted-foreground cursor-pointer w-5 h-5 transition-colors duration-200" />
-                              <div className="absolute right-0 mt-2 w-40 bg-popover rounded shadow-lg z-10 hidden group-hover:block border border-border transition-colors duration-300">
+                              <MoreHorizontal className="text-white/60 cursor-pointer w-5 h-5" />
+                              <div className="absolute right-0 mt-2 w-40 bg-gray-800 rounded shadow-lg z-10 hidden group-hover:block">
                                 <button
-                                  className="flex items-center w-full px-4 py-2 text-sm text-popover-foreground hover:bg-accent transition-colors duration-200"
+                                  className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-gray-700"
                                   onClick={() => {
                                     setEditingListId(list._id);
                                     setEditingListTitle(list.title);
@@ -1189,27 +671,48 @@ export default function Board() {
           )}
         </Droppable>
       </DragDropContext>
-      {/* Render CardModal if a card is selected */}
+      {/* Card modal - Made responsive */}
       {selectedCard && (
-        <CardModal
-          card={selectedCard}
-          onClose={closeCardModal}
-          onUpdate={(updatedCard) => {
-            setBoard((prev) => ({
-              ...prev,
-              lists: prev.lists.map((list) =>
-                list._id === selectedCard.list._id
-                  ? {
-                      ...list,
-                      cards: list.cards.map((c) =>
-                        c._id === updatedCard._id ? updatedCard : c
-                      ),
-                    }
-                  : list
-              ),
-            }));
-          }}
-        />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 p-4 md:p-0">
+          <div className="bg-[#22272b] rounded-lg p-4 md:p-8 w-full max-w-lg shadow-lg relative max-h-[90vh] overflow-y-auto">
+            <button
+              className="absolute top-2 right-2 text-white/70 hover:text-white"
+              onClick={closeCardModal}
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl md:text-2xl font-bold text-white mb-4 pr-6">
+              {selectedCard.title}
+            </h2>
+            <label className="block text-white/80 mb-2 text-sm md:text-base">
+              Description
+            </label>
+            <textarea
+              className="w-full px-3 py-2 rounded bg-[#282E33] text-white mb-4 border border-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
+              placeholder="Add a more detailed description..."
+              value={selectedCard.description || ""}
+              onChange={(e) => {
+                setSelectedCard({
+                  ...selectedCard,
+                  description: e.target.value,
+                });
+                debouncedSaveDescription(
+                  selectedCard._id,
+                  e.target.value,
+                  selectedCard.list._id
+                );
+              }}
+            />
+            <div className="flex justify-between items-center mt-4">
+              <div className="text-white/80 font-semibold text-sm md:text-base">
+                Actions
+              </div>
+              <Button size="sm" onClick={openMoveDialog}>
+                Move
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
       {/* Move card dialog - Made responsive */}
       {showMoveDialog && selectedCard && (
@@ -1409,9 +912,6 @@ export default function Board() {
           </div>
         </div>
       )}
-
-      {/* Real-time notifications */}
-      <NotificationToast />
     </div>
   );
 }
